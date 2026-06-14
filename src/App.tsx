@@ -1,5 +1,5 @@
 import { useEffect, Suspense, lazy } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { HashRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useAppStore, type ThemeMode } from "./stores/useAppStore"
 import { MainLayout } from "./components/shared/MainLayout"
@@ -73,7 +73,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route element={<MainLayout />}>
               <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
@@ -90,7 +90,7 @@ export default function App() {
               <Route path={ROUTES.PROJECTS} element={<Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense>} />
             </Route>
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </ThemeProvider>
     </QueryClientProvider>
   )

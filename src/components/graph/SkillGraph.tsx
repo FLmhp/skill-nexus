@@ -151,7 +151,7 @@ export default function SkillGraph({ data, layout, onCyReady, onNodeSelect }: Sk
       cy.destroy();
       cyRef.current = null;
     };
-  }, [data, onCyReady, onNodeSelect]);
+  }, [data, onCyReady, onNodeSelect, layout]);
 
   useEffect(() => {
     const cy = cyRef.current;

@@ -24,7 +24,7 @@ export default function Dashboard() {
     fetchSkills();
     fetchAgents();
     fetchResults();
-  }, []);
+  }, [fetchSkills, fetchAgents, fetchResults]);
 
   const stats = [
     {

@@ -18,7 +18,7 @@ export default function Skills() {
 
   useEffect(() => {
     fetchSkills();
-  }, []);
+  }, [fetchSkills]);
 
   const filteredSkills = skills.filter(
     (s) =>

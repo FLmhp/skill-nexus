@@ -6,6 +6,7 @@ export function useSkills() {
 
   useEffect(() => {
     store.fetchSkills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return store;

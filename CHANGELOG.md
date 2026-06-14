@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/FLmhp/skill-nexus/compare/v0.1.0...v0.1.1) (2026-06-14)
+
+
+### Bug Fixes
+
+* BrowserRouter→HashRouter for Tauri production compatibility, fix CSP for Tauri IPC protocols ([b11fdab](https://github.com/FLmhp/skill-nexus/commit/b11fdab3cabac4e7f76e7073f7ea83fa0ffebfb1))
+
 ## [0.1.0] - 2026-06-14
 
 ### Added

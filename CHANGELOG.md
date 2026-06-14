@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/FLmhp/skill-nexus/compare/v0.1.2...v0.1.3) (2026-06-14)
+
+
+### Bug Fixes
+
+* match VaporGit CSP pattern (simplified) — remove unnecessary tauri:/ipc: protocols and 'unsafe-inline' script-src, revert base './' ([ee2e838](https://github.com/FLmhp/skill-nexus/commit/ee2e838c579702cd045272b780de5a1ef4d8b95e))
+
 ## [0.1.2](https://github.com/FLmhp/skill-nexus/compare/v0.1.1...v0.1.2) (2026-06-14)
 
 

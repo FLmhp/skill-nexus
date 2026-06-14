@@ -1,6 +1,6 @@
 [package]
 name = "skills-nexus"
-version = "0.1.2"
+version = "0.1.3"
 description = "Cross-platform desktop Skills visual manager for AI coding assistants"
 authors = ["Skills Nexus"]
 license = "MIT"

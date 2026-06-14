@@ -1,7 +1,6 @@
-# Skills Nexus — Agent Workflow Reference
+# Skill Nexus — Agent Workflow Reference
 
-> 本文档为 AI Agent（Claude Code 等）在此项目中的工作流程提供标准化指引。
-> 目标：确保 Agent 按照固定边界和流程处理任务，减少遗漏和偏差。
+本文档为在 Skill Nexus 项目中工作的 AI Agent（Claude Code、Codex、OpenCode、Cursor、Gemini CLI 等）提供标准化工作流程。
 
 ---
 
@@ -15,36 +14,42 @@
 
 ## 一、需求边界确定
 
-### 1.1 收到需求后第一步
+### 1.1 项目上下文读取
 
-- 阅读 `AGENTS.md`（本文件）了解流程
-- 阅读 `CLAUDE.md` 了解项目结构、命令、架构约定
-- 阅读 `package.json` 和 `src-tauri/Cargo.toml` 了解当前版本号
-- 如涉及具体代码，先确认当前分支和工作区状态
+Agent 启动后应首先阅读以下文件以获取项目上下文：
+
+- `AGENTS.md` — 本文档，Agent 工作流规范
+- `CLAUDE.md` — 项目特定指令（如存在）
+- `package.json` — 前端依赖和脚本
+- `src-tauri/Cargo.toml` — Rust 后端依赖
 
 ### 1.2 需求分类
 
-| 类别 | 示例 | 处理方式 |
-|------|------|---------|
-| **Bug 修复** | 数据丢失、部署失败、IPC 错误 | 复现 → 定位根因 → 最小修复 |
-| **功能开发** | 新UI页面、新工具支持、新IPC命令 | 架构设计 → 逐步实现 |
-| **代码审查** | 安全审计、质量审查 | 按审查清单逐项检查 |
-| **重构/优化** | 性能优化、代码清理、bundle 缩减 | 确定范围 → 逐步更改 |
-| **配置/构建** | CI/CD、打包、版本发布 | 按构建流程处理 |
+| 类别 | 说明 | 示例 |
+|------|------|------|
+| Bug Fix | 修复已知缺陷 | 修复 Skill 解析器对空 YAML 处理的 panic |
+| Feature Dev | 新功能开发 | 添加 Skill 依赖关系自动检测 |
+| Code Review | 代码审查 | 审查 PR 中的安全扫描逻辑 |
+| Refactor | 重构优化 | 将扫描引擎从 walkdir 迁移到 ignore |
+| Config / Build | 配置和构建变更 | 更新 Tauri CSP 策略，升级 Rust edition |
 
-### 1.3 边界确认
+### 1.3 边界确认清单
 
-在开始编码前必须确认：
+在开始编写代码前，必须与开发者确认：
 
-- [ ] 需求是否明确？模糊处是否已提问澄清？
-- [ ] 是否已理解该需求对 Rust 后端 / React 前端 / SQLite 数据库的影响范围？
-- [ ] 是否有现成的 IPC 命令、TanStack Query hook、Zustand store 可以复用？
-- [ ] 是否需要新增数据库迁移？是否影响 FTS5 索引？
-- [ ] 改动是否会破坏现有功能？
+- [ ] **需求范围**：具体要做什么？不做什么边界在哪？
+- [ ] **影响范围**：会触碰哪些模块/文件？
+- [ ] **验收标准**：什么算"完成"？
+- [ ] **时间约束**：是否有紧急性要求？
+- [ ] **向后兼容**：是否会影响现有功能？
+- [ ] **数据迁移**：是否需要数据库迁移？
 
-### 1.4 复杂任务的处理原则
+### 1.4 复杂任务处理原则
 
-将多步骤任务拆分为可独立验证的子任务。每完成一个子任务后同步进展。
+1. **分解原则**：将复杂任务分解为独立可验证的子任务
+2. **渐进交付**：每个子任务完成后提交一次，便于回溯
+3. **优先确认**：不确定的设计决策先与开发者确认再动手
+4. **文档先行**：涉及架构变更时，先在 AGENTS.md 更新对应章节
 
 ---
 
@@ -54,122 +59,213 @@
 
 | 层面 | 技术 |
 |------|------|
-| 前端框架 | React 19 + TypeScript（**不是** SolidJS） |
-| 路由 | `react-router-dom` v7 |
-| 状态管理（客户端） | Zustand v5（`useAppStore`, `useUIStore`） |
-| 状态管理（服务端） | TanStack Query v5（缓存、重取、乐观更新） |
-| 样式 | Tailwind CSS v4 + CSS variables 主题系统 |
-| 组件库 | shadcn/ui（Radix primitives） |
-| 代码编辑器 | Monaco Editor（lazy loaded） |
-| 图可视化 | React Flow + dagre |
-| 拖拽 | @dnd-kit |
-| 图表 | Recharts |
-| 国际化 | i18next + react-i18next（zh + en） |
+| 前端框架 | React 19 + TypeScript |
+| 状态管理 | Zustand 5 |
+| 路由 | React Router v7 |
+| 样式 | Tailwind CSS v3 |
+| UI 组件 | Radix UI |
+| 可视化 | Cytoscape.js |
+| 编辑器 | Monaco Editor (planned) |
 | 桌面框架 | Tauri 2 |
-| 后端语言 | Rust（edition 2021） |
-| 数据库 | SQLite（WAL 模式，FTS5 全文搜索） |
-| 连接池 | r2d2 + r2d2_sqlite |
-| HTTP 客户端 | reqwest |
-| 文件监听 | notify crate |
-| 构建 | Vite 8（前端）+ Cargo（后端） |
-| 版本发布 | release-it + GitHub Actions |
+| 后端语言 | Rust (edition 2021) |
+| 数据库 | SQLite (WAL 模式) |
+| 构建 | Vite + Cargo |
 
-### 2.2 架构约定
+### 2.2 后端架构约定
 
-**后端模块结构（`src-tauri/src/`）：**
 ```
-commands/      Tauri 命令桥接层（system, skills, tools, deployments, projects,
-               dependencies, testing, analytics, marketplace, recommendations）
-modules/       核心业务逻辑（hub, symlink, scanner, security, backup）
-db/            数据库层（connection, migrations, models）
-config.rs      应用配置（hub_path, db_path, theme, language）
-state.rs       AppState（db pool + RwLock<AppConfig>）
-```
-
-**前端模块结构（`src/`）：**
-```
-features/      11 个功能模块，每个模块一个页面（dashboard, skills, editor,
-               builder, graph, sandbox, analytics, marketplace, tools,
-               settings, projects）
-components/    可复用组件（shared/ 下：MainLayout, AppSidebar, StatusBar,
-               SkillCard）
-hooks/         TanStack Query hooks（useSkills, useDeployments...）
-stores/        Zustand stores（useAppStore, useUIStore）
-services/      IPC 抽象层（ipc.ts — 所有 Tauri invoke 包装 + DTO 类型）
-lib/           工具函数（cn.ts, constants.ts）
-i18n/          国际化翻译文件（locales/en/, locales/zh/）
+src-tauri/src/
+├── commands/        # Tauri 命令（IPC 接口层）
+│   ├── mod.rs
+│   ├── skills.rs    # Skill 扫描/CRUD 命令
+│   ├── security.rs  # 安全扫描命令
+│   ├── sync.rs      # 多 Agent 同步命令
+│   └── mcp.rs       # MCP Server 配置命令
+├── services/        # 业务逻辑层
+│   ├── mod.rs
+│   ├── scanner.rs   # Skill 扫描引擎
+│   ├── security.rs  # 安全扫描引擎
+│   ├── syncer.rs    # 多 Agent 同步引擎
+│   └── marketplace.rs # 在线市场集成
+├── db/              # 数据库层
+│   ├── mod.rs
+│   └── migrations.rs
+├── models/          # 数据模型
+│   └── mod.rs
+├── lib.rs           # Tauri 命令注册入口
+└── main.rs          # 应用入口
 ```
 
-### 2.3 编码规则
+**设计原则**：
+- `commands/` 仅处理参数反序列化、权限校验、结果序列化，不包含业务逻辑
+- `services/` 包含所有业务逻辑，可被 commands/ 和内部调用
+- `models/` 定义共享数据结构（serde Serialize/Deserialize）
+- `db/` 封装所有数据库操作，对外暴露异步接口
 
-#### Rust 后端
+### 2.3 前端架构约定
 
-- **错误处理**：所有 Tauri 命令返回 `Result<T, String>`，错误消息使用**英文**（与现有代码风格一致）
-- **Tauri 命令**：在 `commands/` 对应模块中添加，在 `lib.rs` 的 `generate_handler![]` 中注册
-- **数据库操作**：使用 `state.db.clone()` 获取连接池，`conn = db.get()?` 获取连接
-- **SQLite 迁移**：在 `db/migrations.rs` 的 `MIGRATIONS` 数组末尾追加，**绝不删除或重排已有条目**
-- **FTS5 索引**：创建/更新/删除 skill 时必须同步维护 `skills_fts` 虚拟表（不支持外键级联）
-- **State 引用**：跨 `await` 边界的 Tauri 命令中，数据库查询必须在独立的同步块中完成（rusqlite `Connection` 不是 `Send`）
-- **内容哈希**：新建或更新 skill 内容时必须计算 SHA-256 哈希
+```
+src/
+├── api/             # Tauri invoke 调用封装层
+│   ├── skills.ts    # Skill 相关 API
+│   ├── security.ts  # 安全扫描 API
+│   ├── sync.ts      # 同步 API
+│   └── marketplace.ts # 市场 API
+├── stores/          # Zustand 状态管理
+│   ├── skillStore.ts
+│   ├── securityStore.ts
+│   ├── syncStore.ts
+│   └── uiStore.ts
+├── components/      # 组件
+│   ├── ui/          # 通用 UI 组件（shadcn/ui 风格）
+│   ├── skills/      # Skill 相关组件
+│   ├── security/    # 安全相关组件
+│   ├── graph/       # 图谱可视化组件
+│   ├── mcp/         # MCP 配置组件
+│   ├── agents/      # Agent 管理组件
+│   ├── marketplace/ # 市场组件
+│   └── layout/      # 布局组件
+├── pages/           # 路由页面
+│   ├── Graph.tsx    # 可视化图谱页
+│   ├── Skills.tsx   # Skill 列表页
+│   ├── Security.tsx # 安全扫描页
+│   └── Settings.tsx # 设置页
+├── hooks/           # 自定义 Hooks
+├── types/           # TypeScript 类型定义
+├── i18n/            # 国际化
+│   ├── index.ts
+│   ├── en.ts
+│   └── zh.ts
+├── lib/             # 工具函数
+│   └── utils.ts
+├── main.tsx         # 应用入口
+└── index.css        # 全局样式 + Tailwind
+```
 
-#### TypeScript 前端
+### 2.4 Rust 编码规范
 
-- **状态管理**：客户端 UI 状态用 Zustand，服务端数据用 TanStack Query
-- **IPC 调用**：全部通过 `src/services/ipc.ts` 封装，不直接 `invoke()`
-- **i18n**：用户可见文本使用 `useTranslation()` 的 `t('section.key')`，新增文本在 `locales/en/common.json` 和 `locales/zh/common.json` 中同步添加
-- **主题**：使用 CSS variables（`--surface-*`, `--brand-*`, `--text-*`），不硬编码颜色值；支持通过 `.dark` class 切换
-- **class 合并**：使用 `cn()` 工具函数（`src/lib/cn.ts`），结合 `clsx` 和 `tailwind-merge`
-- **懒加载**：重型页面（Builder, Graph, Sandbox, Analytics, Marketplace, Projects）使用 `React.lazy()` + `<Suspense>`
-- **组件状态覆盖**：每个数据展示组件必须覆盖 loading、empty、error、正常四种状态
+**错误处理**：
+- 服务层函数返回 `Result<T, String>`，使用 `.map_err(|e| e.to_string())?` 传播错误
+- Tauri 命令返回 `Result<T, String>` 以自动转义为前端可读错误
+- 禁止在 Rust 端 `unwrap()` 或 `expect()`（除非逻辑上不可能出错）
+- 使用 `anyhow::Result` 或自定义错误类型时务必保持一致
 
-### 2.4 常见陷阱
+**Tauri 命令注册**：
+- 命令函数定义在 `commands/` 模块中
+- 在 `lib.rs` 中通过 `.invoke_handler(tauri::generate_handler![...])` 注册
+- 命令名称使用 snake_case，前端调用时也使用 snake_case
 
-- **数据库连接不是 Send**：含 `stmt` 或 `conn` 的代码块必须在 `.await` 前结束（用 `{}` 包裹），否则编译报错
-- **FTS5 虚拟表不支持级联删除**：删除 skill 时必须手动 `DELETE FROM skills_fts WHERE rowid = ...`
-- **Windows symlink 需要 Developer Mode**：部署时自动检测并回退到 copy 模式
-- **release-it 需要在 git repo 中运行**：确保项目已 `git init` 并关联 remote
-- **Tauri State 不可跨命令传递**：用共享辅助函数（`do_*` 模式）而非调用其他 `#[tauri::command]`
-- **版本号三处同步**：`package.json`, `Cargo.toml`, `tauri.conf.json` 必须保持一致（由 `scripts/sync-version.mjs` 自动处理）
+**路径验证**：
+- 所有接收路径参数的命令必须验证路径在允许范围内
+- 使用 `std::path::Path::canonicalize()` 解析符号链接
+- 防止目录穿越攻击：检查规范化后的路径是否以允许的根目录为前缀
+
+**并发安全**：
+- 同步 I/O 操作（如文件扫描）使用 `tokio::task::spawn_blocking` 包装
+- 跨线程共享数据使用 `Arc<Mutex<T>>` 或 `Arc<RwLock<T>>`
+- SQLite 连接通过 `rusqlite::Connection` 在 blocking task 中使用
+
+### 2.5 TypeScript 编码规范
+
+**Zustand Store 规范**：
+```typescript
+import { create } from 'zustand';
+
+interface SkillStore {
+  skills: Skill[];
+  loading: boolean;
+  error: string | null;
+  fetchSkills: () => Promise<void>;
+  addSkill: (path: string) => Promise<void>;
+}
+
+export const useSkillStore = create<SkillStore>((set, get) => ({
+  skills: [],
+  loading: false,
+  error: null,
+  fetchSkills: async () => {
+    set({ loading: true, error: null });
+    try {
+      const skills = await api.getSkills();
+      set({ skills, loading: false });
+    } catch (e) {
+      set({ error: String(e), loading: false });
+    }
+  },
+  addSkill: async (path) => {
+    // ...
+  },
+}));
+```
+
+**API 封装规范**：
+- 所有 Tauri 调用通过 `src/api/` 下的模块封装，不在组件中直接调用 `invoke`
+- API 函数签名明确参数和返回类型
+- API 函数使用 `async/await` 并返回 `Promise<T>`
+
+**错误处理**：
+- 所有 API 调用须有 try/catch，错误信息展示给用户
+- 捕获后使用 `console.error` 记录，使用 store 的 error 状态展示
+
+**状态展示规范**：
+- 每个数据驱动组件必须处理三种状态：**loading**（加载骨架屏/Spinner）、**empty**（空状态提示）、**error**（错误信息 + 重试按钮）
+- 使用 Suspense + ErrorBoundary 作为兜底方案
+
+### 2.6 常见陷阱
+
+| 陷阱 | 说明 | 解决方案 |
+|------|------|----------|
+| **Tauri CSP** | CSP 策略过严导致资源加载失败 | 在 `tauri.conf.json` 的 `app.security.csp` 中配置白名单 |
+| **Windows 符号链接** | Windows 上创建符号链接需要管理员权限或开发者模式 | 使用 junction 或避免 symlink |
+| **Cytoscape 性能** | 大量节点/边时渲染卡顿 | 节点数 > 500 时启用虚拟化；使用 `cytoscape-cose-bilkent` 布局 |
+| **SQLite 并发** | 多个 Tauri 命令同时写 SQLite 导致 `SQLITE_BUSY` | 使用 WAL 模式；启用 `rusqlite` 的 `bundled` feature |
+| **Tauri 文件权限** | `plugin-fs` 需要正确配置 scope | 在 `tauri.conf.json` 的 `plugins.fs.scope` 中声明允许的目录 |
+| **热重载失效** | Rust 代码修改后前端不自动刷新 | 使用 `tauri dev` 而非 `vite` 启动，或手动重启 |
 
 ---
 
 ## 三、代码安全性审查
 
-每次提交前必须执行以下安全检查：
+### 3.1 安全检查清单
 
-### 3.1 审查清单
+#### 路径和文件操作
+- [ ] 所有文件路径操作前已规范化（`canonicalize` / `resolve`）
+- [ ] 已验证路径在允许的目录范围内
+- [ ] 已防止目录穿越攻击（`../` 注入）
+- [ ] 不允许访问系统敏感路径（`/etc/passwd`、`C:\Windows\System32` 等）
 
-#### 文件系统与路径
-- [ ] 文件写入是否在 `~/.skills-nexus/` 范围内？
-- [ ] 部署目标路径是否限制在已知 AI tool 配置目录中（`tauri.conf.json` 的 FS scope）？
-- [ ] 用户提供的文件名是否经过 `sanitize_filename()` 处理？
+#### 用户输入验证
+- [ ] 所有外部输入已校验类型和范围
+- [ ] Git 分支名 / 标签名使用正则白名单校验：`^[a-zA-Z0-9._/-]+$`
+- [ ] 空字符串、null、undefined 已处理
+- [ ] 数组/集合大小上限已设置，防止 DoS
 
-#### 用户输入
-- [ ] Skill 名称和内容是否验证非空？
-- [ ] import 的文件路径是否验证存在？
-- [ ] FTS5 搜索查询是否防止了注入（使用参数化查询 `?`）？
+#### Token / 凭据管理
+- [ ] API Token、密钥等凭据不使用硬编码
+- [ ] 使用环境变量或系统凭据管理器存储
+- [ ] 日志和错误信息中不输出 Token
+- [ ] Git 提交中不包含凭据文件
 
-#### API 密钥与凭据
-- [ ] `ANTHROPIC_API_KEY` 和 `OPENAI_API_KEY` 是否仅从环境变量读取？
-- [ ] 是否有 API key 被日志打印或返回到前端？
-- [ ] `.env` 和 `.env.local` 是否在 `.gitignore` 中？
-
-#### CSP
-- [ ] 新功能是否引入外部资源（CDN 脚本、字体、connect-src）？如有，需更新 `tauri.conf.json` 的 CSP
-- [ ] CSP 中 `script-src` 是否保持 `'self'`？
+#### CSP 检查
+- [ ] 确认 `tauri.conf.json` 中 `csp` 配置正确
+- [ ] 新增外部资源（CDN、API 域名）已加入 CSP 白名单
+- [ ] 避免使用 `'unsafe-eval'`，除非第三方库必须
 
 #### 错误处理
-- [ ] 所有 Tauri 命令的错误是否被前端 `onError` 处理（Toast 通知）？
-- [ ] `catch` 块是否至少 `console.error`？
+- [ ] catch 块不为空（至少 `console.error`）
+- [ ] 错误信息对用户友好，不暴露内部实现细节
+- [ ] Rust `unwrap()` / `expect()` 已替换为 `?` 或 `match`
 
-#### 数据库
-- [ ] 新增查询是否使用参数化 SQL（`?1, ?2`）而非字符串拼接？
-- [ ] 是否考虑了 SQLite 的并发访问（WAL 模式下的读写并发）？
+#### 并发安全
+- [ ] 文件 I/O 操作使用 `spawn_blocking`
+- [ ] 共享状态使用 `Arc<Mutex<T>>` 保护
+- [ ] 多线程访问 SQLite 使用正确的连接池或串行化
 
-### 3.2 审查后动作
+### 3.2 审查后操作
 
-- 发现安全问题 → 修复后再提交
-- 发现严重问题（路径遍历、密钥泄露、SQL 注入）→ 立即报告开发者
+1. 发现问题时在代码中标注 `// SAFETY: <说明>`
+2. 严重安全问题立即通知开发者
+3. 审查完成后在提交信息中使用 `security:` 类型
 
 ---
 
@@ -177,170 +273,234 @@ i18n/          国际化翻译文件（locales/en/, locales/zh/）
 
 ### 4.1 分支策略
 
-- 工作流程：
-  ```bash
-  git checkout -b feature/xxx   # 新功能分支
-  git checkout -b fix/xxx       # 修复分支
-  ```
+```
+main          ← 合并目标（受保护，仅通过 PR / merge 进入）
+feature/*     ← 功能开发分支（如 feature/skill-search）
+fix/*         ← 缺陷修复分支（如 fix/scanner-panic）
+```
 
-### 4.2 🔴 Git 操作禁令（严格遵守）
+### 4.2 🔴 禁止操作（绝对不可执行）
 
-| 禁止的操作 | 原因 | 安全替代方案 |
-|-----------|------|------------|
-| `git push --force` / `git push -f` | 覆盖远程历史 | 用 `git revert` |
-| `git push --force-with-lease` | 同上 | 同上 |
-| `git reset --hard HEAD~n` | 永久丢弃提交 | 用 `git reset --soft` |
-| `git commit --amend`（已推送分支） | 历史分歧 | 用新提交 |
-| `git checkout -- .` | 批量丢弃工作区 | 逐个文件恢复 |
-| `git clean -fd` / `git clean -fdx` | 不可恢复 | 逐个文件确认 |
-| `git branch -D`（大写 D） | 强制删除未合并分支 | 用 `git branch -d` |
-| `git rebase` 在共享分支上 | 改写已推送历史 | 仅私有/本地分支可使用 |
+| 操作 | 原因 |
+|------|------|
+| `git push --force` | 覆盖远程历史，破坏协作 |
+| `git reset --hard <remote>` | 丢失本地未推送的工作 |
+| `git commit --amend` (已推送的提交) | 重写历史导致冲突 |
+| `git rebase` (共享分支) | 破坏他人的基准提交 |
+| `git clean -fd` | 不可逆删除未跟踪文件 |
+| `git branch -D` (未确认的分支) | 无法恢复已删除分支 |
 
-### 4.3 提交规范
+### 4.3 ⚠️ 需确认操作
 
-格式：`<type>: <简短描述>`
+执行以下操作前必须向开发者确认并说明后果：
 
-| type | 适用场景 |
-|------|---------|
-| feat | 新功能 |
-| fix | Bug 修复 |
-| security | 安全修复 |
-| refactor | 重构 |
-| perf | 性能优化 |
-| i18n | 国际化相关 |
-| style | UI/样式调整 |
-| docs | 文档更新 |
-| chore | 构建/配置/版本 |
+| 操作 | 风险 |
+|------|------|
+| `git reset --soft HEAD~N` | 取消最近 N 次提交但保留更改 |
+| `git rebase` (个人分支) | 整理提交历史，需注意冲突 |
+| `git push --delete <branch>` | 删除远程分支 |
+| `git revert <commit>` | 新增反向提交，不删除历史 |
 
-### 4.4 Push 前检查
+### 4.4 安全操作指南
 
-- [ ] `cargo build`（或 `cargo check`）通过（Rust 后端）
-- [ ] `npx vite build` 通过（前端构建）
-- [ ] 安全性审查清单已检查
-- [ ] **确认不包含上述禁止操作**
-- [ ] 版本号三处一致（如有版本变更）
+- 始终先 `git status` 和 `git log --oneline -10` 了解当前状态
+- `git pull --rebase` 替代 `git pull`（避免多余的 merge 提交）
+- 提交前 `git diff --staged` 确认变更内容
+- 使用 `git stash` 暂存未完成工作而非临时提交
 
-### 4.5 Push
+### 4.5 提交格式
+
+```
+<type>: <description>
+```
+
+**类型**：
+
+| Type | 说明 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | 缺陷修复 |
+| `security` | 安全相关修复 |
+| `refactor` | 代码重构（无功能变更） |
+| `perf` | 性能优化 |
+| `i18n` | 国际化翻译 |
+| `chore` | 构建、依赖、工具链维护 |
+| `docs` | 文档更新 |
+
+**示例**：
+```
+feat: add skill dependency graph export to PNG
+fix: handle empty YAML frontmatter in scanner
+security: validate directory path before scan
+i18n: add German translation for skill detail page
+```
+
+### 4.6 Push 前检查清单
+
+- [ ] `cargo check --manifest-path src-tauri/Cargo.toml` 通过
+- [ ] `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings` 通过
+- [ ] `tsc --noEmit` 通过
+- [ ] `npm run lint` 通过
+- [ ] `npm test` 通过
+- [ ] `vite build` 通过
+- [ ] 安全性审查已完成
+- [ ] 当前不在 `main` 分支上直接提交
+- [ ] 不包含 `--force` 参数
+
+### 4.7 Push 命令
 
 ```bash
-git add <files>
-git commit -m "<type>: <message>"
-git push origin <branch>
+git push origin <current-branch>
 ```
 
 ---
 
 ## 五、版本发布流程
 
-### 5.1 版本号规范
+### 5.1 语义化版本
 
-遵循语义化版本 `MAJOR.MINOR.PATCH`，三处文件同步更新：
-- `package.json` → `version`
-- `src-tauri/Cargo.toml` → `package.version`
-- `src-tauri/tauri.conf.json` → `version`
+遵循 [Semantic Versioning](https://semver.org/) 规范：`MAJOR.MINOR.PATCH`
 
-### 5.2 发布命令
+- **MAJOR**：不兼容的 API 变更
+- **MINOR**：向后兼容的新功能
+- **PATCH**：向后兼容的缺陷修复
 
-```bash
-npm run release:patch     # 0.1.0 → 0.1.1（bug 修复）
-npm run release:minor     # 0.1.0 → 0.2.0（新功能）
-npm run release:major     # 0.1.0 → 1.0.0（破坏性变更）
-npm run release:dry       # 预览（不执行）
-```
+### 5.2 发布步骤
 
-### 5.3 发布流程
+1. **询问开发者**：
+   > "是否使用 GitHub Actions 构建下一个版本发布？"
 
-完成开发工作后：
+2. **开发者确认后**：
 
-1. **询问开发者**：`是否需要发布新版本？`
+   a. **确定版本号**：根据变更内容确定 `major` / `minor` / `patch`
 
-2. **如果确认发布**：
+   b. **更新 CHANGELOG.md**：
+      - 遵循 [Keep a Changelog](https://keepachangelog.com/) 格式
+      - 添加 `## [X.Y.Z] - YYYY-MM-DD` 条目
+      - 按 `Added` / `Changed` / `Deprecated` / `Removed` / `Fixed` / `Security` 分类
 
-   a. **确定版本号**：询问开发者或根据 commits 推算
-
-   b. **运行 release**：
+   c. **执行版本升级**：
       ```bash
-      npm run release:patch   #（或其他 bump 类型）
+      npm run version -- <version>
       ```
-      自动执行：
-      - 更新 `CHANGELOG.md`（从 conventional commits 生成）
-      - 升级三处版本号（`package.json` → `Cargo.toml` → `tauri.conf.json`）
-      - 创建 git tag `vX.Y.Z`
-      - 推送到 GitHub 并创建 Release
+      此命令会更新 `package.json`、`tauri.conf.json`、`Cargo.toml` 中的版本号，并创建 git tag
 
-   c. **手动触发全平台构建**（如需安装器）：
-      GitHub Actions → **Release** workflow → `workflow_dispatch` → 选择 bump 类型
-      自动构建 Windows（.msi）、macOS（.dmg）、Linux（.AppImage）并附加到 Release
+   d. **推送触发 CI**：
+      ```bash
+      git push origin main && git push origin v<version>
+      ```
 
-3. **如果开发者不确认发布** → 结束流程。
+   e. **GitHub Actions 自动构建**：
+      - 构建 Windows（`.exe` / `.msi`）、macOS（`.dmg`）、Linux（`.deb` / `.AppImage`）
+      - 创建 GitHub Release 并上传构建产物
+
+   f. **通知开发者**：提供 Release URL 和构建状态
+
+### 5.3 GitHub Actions 注意事项
+
+- Release 工作流需等待 CI 工作流通过后执行
+- 构建产物命名格式：`Skill-Nexus_{version}_{platform}.{ext}`
+- Alpha/Beta/RC 版本标记为 `prerelease: true`
+- 工作流失败时检查 Action 日志，常见原因：
+  - `tauri-action` 版本不兼容
+  - 系统依赖缺失（如 Linux 的 `libwebkit2gtk`）
+  - `GITHUB_TOKEN` 权限不足
 
 ---
 
 ## 六、其他流程
 
-### 6.1 新增 IPC 命令
+### 6.1 i18n 扩展
 
-1. 在 `src-tauri/src/commands/<domain>.rs` 中添加 `#[tauri::command]`
-2. 在 `src-tauri/src/lib.rs` 的 `generate_handler![]` 中注册
-3. 在 `src/services/ipc.ts` 中添加 TypeScript 包装函数 + DTO 类型
-4. 如需前端缓存，在 `src/hooks/` 中添加 TanStack Query hook
+添加新语言（以德语为例）：
 
-### 6.2 新增数据库迁移
+1. 在 `src/i18n/` 下创建 `de.ts`
+2. 从 `en.ts` 复制所有 key，翻译 value
+3. 在 `src/i18n/index.ts` 中注册 `de` 语言选项
+4. 确保所有新增 key 同时在 `en.ts` 和 `zh.ts` 中添加
+5. 提交使用 `i18n:` 前缀
 
-1. 在 `src-tauri/src/db/migrations.rs` 的 `MIGRATIONS` 数组末尾追加 SQL 字符串
-2. 版本号自动递增（通过数组索引 + 1）
-3. 旧迁移条目**绝不修改或删除**
+### 6.2 Tauri 命令注册流程
 
-### 6.3 国际化（i18n）扩充
+添加新的 Tauri 命令：
 
-1. 在 `src/i18n/locales/en/common.json` 中添加英文 key
-2. 在 `src/i18n/locales/zh/common.json` 中添加中文翻译
-3. 前端代码中使用 `t('section.key')` 引用
+1. 在 `src-tauri/src/commands/` 对应文件中实现命令函数
+2. 确保函数签名符合 Tauri 命令规范：`#[tauri::command]` + 参数实现 `serde::Deserialize`
+3. 在 `src-tauri/src/lib.rs` 的 `.invoke_handler()` 中注册命令
+4. 在 `src/api/` 对应文件中封装 `invoke()` 调用
+5. 在 `src/types/` 中定义请求/响应 TypeScript 类型
 
-### 6.4 代码审查流程
+### 6.3 添加 Rust Service
 
-1. 按维度检查：安全性 → 业务逻辑 → 潜在 Bug → 错误处理 → UI 状态覆盖
-2. 重点检查：IPC 边界类型一致性、SQL 参数化、FTS5 索引同步、跨平台兼容
-3. 记录为结构化报告，修复后再提交
+添加新的业务逻辑模块：
+
+1. 在 `src-tauri/src/services/` 下创建新文件
+2. 在 `src-tauri/src/services/mod.rs` 中声明 `pub mod <name>;`
+3. 创建对应的 `src-tauri/src/commands/<name>.rs` 作为命令桥接层
+4. 在 `src-tauri/src/lib.rs` 中注册服务模块和命令
+5. 服务层的公共 API 返回 `Result<T, String>`
+
+### 6.4 Code Review 流程
+
+1. **自审**：提交前用 `git diff` 自查变更
+2. **CI 通过**：确保所有 CI 检查（lint、typecheck、test、build、clippy）通过
+3. **创建 PR**：使用 GitHub PR 模板，填写变更说明
+4. **审查要点**：
+   - 逻辑正确性：边界条件是否处理？
+   - 安全性：路径校验、输入验证？
+   - 性能：是否有不必要的重复计算或 I/O？
+   - 代码风格：是否符合本文档规范？
+5. **合并方式**：优先使用 Squash and Merge 保持 main 历史整洁
 
 ---
 
 ## 七、快速参考
 
-### 常用命令
+### 7.1 常用命令
 
-```bash
-npm run tauri dev          # 启动 Tauri 开发环境
-npm run dev                # 启动 Vite 前端开发服务器
-npm run build              # TypeScript 检查 + Vite 生产构建
-npm run lint               # ESLint
-cd src-tauri && cargo check  # Rust 类型检查（快速）
-cd src-tauri && cargo build  # Rust 编译
-npm run release:patch      # 发布补丁版本
-npm run release:dry        # 发布预览
-```
+| 命令 | 用途 |
+|------|------|
+| `npm run dev` | 启动 Vite 开发服务器（仅前端） |
+| `npm run tauri:dev` | 启动 Tauri 开发模式（前端 + 后端） |
+| `npm run build` | 类型检查 + 构建前端 |
+| `npm run lint` | ESLint 代码检查 |
+| `npm run typecheck` | TypeScript 类型检查 |
+| `npm run test` | 运行前端测试 |
+| `npm run test:watch` | 监听模式运行测试 |
+| `npm run format` | Prettier 格式化代码 |
+| `npm run version -- <ver>` | 升级版本号并打 tag |
+| `cargo check --manifest-path src-tauri/Cargo.toml` | Rust 类型检查 |
+| `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings` | Rust Lint 检查（严格模式） |
+| `cargo test --manifest-path src-tauri/Cargo.toml` | 运行 Rust 测试 |
 
-### 关键文件索引
+### 7.2 关键文件索引
 
 | 文件 | 用途 |
 |------|------|
-| `CLAUDE.md` | 项目架构、命令、编码约定（**阅读此文件**） |
-| `src-tauri/src/lib.rs` | Tauri 命令注册中心（41 个命令） |
-| `src-tauri/src/db/migrations.rs` | SQLite 迁移（MIGRATIONS 数组） |
-| `src-tauri/src/commands/skills.rs` | Skill CRUD（最复杂的命令模块） |
-| `src-tauri/src/commands/deployments.rs` | 部署引擎（symlink/copy） |
-| `src-tauri/src/modules/symlink.rs` | 跨平台 symlink 实现 |
-| `src-tauri/src/modules/scanner.rs` | AI 工具检测（15 个工具） |
-| `src-tauri/tauri.conf.json` | Tauri 配置（窗口、CSP、FS scope、插件） |
-| `src/services/ipc.ts` | 所有前端 Tauri 命令包装 + DTO 类型 |
-| `src/App.tsx` | 前端路由配置（含懒加载） |
-| `src/stores/useAppStore.ts` | 全局应用状态（主题、路径等） |
-| `src/stores/useUIStore.ts` | UI 状态（侧栏、模态框、Toast） |
-| `src/i18n/locales/en/common.json` | 英文翻译 |
-| `src/i18n/locales/zh/common.json` | 中文翻译 |
-| `scripts/sync-version.mjs` | 版本号同步脚本 |
-| `.release-it.json` | 发布配置 |
-| `.github/workflows/release.yml` | 全平台构建 + 发布 |
+| `src-tauri/src/lib.rs` | Tauri 命令注册入口 |
+| `src-tauri/src/main.rs` | Rust 应用入口 |
+| `src-tauri/src/services/scanner.rs` | Skill 扫描引擎 |
+| `src-tauri/src/services/security.rs` | 安全扫描引擎 |
+| `src-tauri/src/services/syncer.rs` | 多 Agent 同步引擎 |
+| `src-tauri/src/commands/mod.rs` | Tauri 命令模块管理 |
+| `src-tauri/src/models/mod.rs` | 共享数据模型 |
+| `src-tauri/Cargo.toml` | Rust 依赖配置 |
+| `src-tauri/tauri.conf.json` | Tauri 应用配置（窗口、CSP、插件、打包） |
+| `src/api/skills.ts` | 前端 Tauri 调用封装 |
+| `src/stores/skillStore.ts` | Skill 状态管理 |
+| `src/pages/Graph.tsx` | 可视化图谱页 |
+| `src/main.tsx` | React 应用入口 |
+| `src/i18n/en.ts` | 英文翻译 |
+| `src/i18n/zh.ts` | 中文翻译 |
+| `package.json` | 前端依赖和脚本 |
+| `tsconfig.json` | TypeScript 配置 |
+| `vite.config.ts` | Vite 构建配置 |
+| `tailwind.config.ts` | Tailwind CSS 配置 |
+| `CHANGELOG.md` | 版本变更日志 |
+| `.github/workflows/ci.yml` | 持续集成流水线 |
+| `.github/workflows/release.yml` | 发布构建流水线 |
+| `scripts/bump-version.mjs` | 版本号升级脚本 |
+| `AGENTS.md` | 本文档，Agent 工作流规范 |
 
 ---
 

@@ -42,7 +42,7 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     },
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": false
   },
   "plugins": {
     "fs": {

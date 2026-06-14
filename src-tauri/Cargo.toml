@@ -1,0 +1,40 @@
+[package]
+name = "skills-nexus"
+version = "0.1.0"
+description = "Cross-platform desktop Skills visual manager for AI coding assistants"
+authors = ["Skills Nexus"]
+license = "MIT"
+repository = "https://github.com/skills-nexus/skills-nexus"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2" }
+
+[dependencies]
+tauri = { version = "2.11.2", features = ["tray-icon"] }
+tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+log = "0.4"
+rusqlite = { version = "0.31", features = ["bundled", "vtab"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.24"
+tokio = { version = "1", features = ["full"] }
+notify = { version = "6", features = ["macos_kqueue"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1"
+async-trait = "0.1"

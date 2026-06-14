@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "Skills Nexus",
+    "tagline": "跨端 Skills 可视化管理器"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "skills": "技能库",
+    "editor": "编辑器",
+    "builder": "可视化构建",
+    "graph": "依赖图",
+    "sandbox": "测试沙箱",
+    "analytics": "分析",
+    "marketplace": "市场",
+    "tools": "工具管理",
+    "settings": "设置",
+    "projects": "项目"
+  },
+  "actions": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "search": "搜索",
+    "export": "导出",
+    "import": "导入",
+    "deploy": "部署",
+    "undeploy": "取消部署",
+    "install": "安装",
+    "uninstall": "卸载",
+    "refresh": "刷新",
+    "sync": "同步",
+    "backup": "备份",
+    "restore": "恢复"
+  },
+  "status": {
+    "active": "活跃",
+    "inactive": "未激活",
+    "pending": "等待中",
+    "syncing": "同步中",
+    "error": "错误",
+    "outdated": "已过期",
+    "installed": "已安装",
+    "not_installed": "未安装"
+  },
+  "skills": {
+    "create_new": "创建新技能",
+    "name": "名称",
+    "description": "描述",
+    "category": "分类",
+    "tags": "标签",
+    "version": "版本",
+    "author": "作者",
+    "type": "类型",
+    "dependencies": "依赖",
+    "no_skills": "还没有技能，创建一个吧",
+    "search_placeholder": "搜索技能名称、描述或标签..."
+  },
+  "settings": {
+    "general": "通用",
+    "theme": "主题",
+    "language": "语言",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  }
+}

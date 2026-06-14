@@ -17,17 +17,15 @@ on:
       - 'v*'
 
 jobs:
-  # ── Version Bump + Tag + GitHub Release ──
-  release:
-    name: Create Release
+  # ── Version Bump (workflow_dispatch only) ──
+  bump:
+    name: Bump Version
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     outputs:
-      version: ${{ steps.release.outputs.version }}
+      version: ${{ steps.extract.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,17 +45,21 @@ jobs:
         run: npm ci
 
       - name: Run release-it
-        id: release
-        run: |
-          npx release-it ${{ github.event.inputs.bump }} --ci --verbose
-          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        run: npx release-it ${{ github.event.inputs.bump }} --ci --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: extract
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
   # ── Build Platform Binaries ──
   build:
     name: Build (${{ matrix.os }})
-    needs: release
+    needs: bump
+    if: |
+      always() &&
+      (needs.bump.result == 'success' || needs.bump.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -68,8 +70,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: v${{ needs.release.outputs.version }}
           fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ needs.bump.outputs.version }}" >> $GITHUB_OUTPUT
+          else
+            TAG="${{ github.ref_name }}"
+            echo "value=${TAG#v}" >> $GITHUB_OUTPUT
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -98,8 +109,8 @@ jobs:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: v${{ needs.release.outputs.version }}
-          releaseName: 'Skills Nexus v${{ needs.release.outputs.version }}'
-          releaseBody: 'See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.'
+          tagName: v${{ steps.version.outputs.value }}
+          releaseName: 'Skills Nexus v${{ steps.version.outputs.value }}'
+          releaseBody: 'See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.'
           releaseDraft: false
           prerelease: false

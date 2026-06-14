@@ -10,6 +10,7 @@
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "typecheck": "tsc --noEmit",
+    "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "test": "vitest run --passWithNoTests",

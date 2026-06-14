@@ -6,7 +6,7 @@
     "tagAnnotation": "Release v${version}",
     "requireCleanWorkingDir": false,
     "push": true,
-    "requireBranch": "main"
+    "requireBranch": "master"
   },
   "github": {
     "release": true,

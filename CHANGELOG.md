@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/FLmhp/skill-nexus/compare/v0.1.1...v0.1.2) (2026-06-14)
+
+
+### Bug Fixes
+
+* Vite base './' for relative asset paths, add ErrorBoundary, enable logging in release, add loading fallback in HTML ([4e5c30d](https://github.com/FLmhp/skill-nexus/commit/4e5c30dbde9fe8fdf8b750d56ac6eae4a0ad0209))
+
 ## [0.1.1](https://github.com/FLmhp/skill-nexus/compare/v0.1.0...v0.1.1) (2026-06-14)
 
 

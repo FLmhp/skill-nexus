@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "version": "node scripts/bump-version.mjs",
     "check": "cargo check --manifest-path src-tauri/Cargo.toml",

@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "tauri": "tauri",
     "release": "release-it",
     "release:patch": "release-it patch",
     "release:minor": "release-it minor",

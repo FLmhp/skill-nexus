@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import {
   ArrowLeft, Edit3, Trash2, Copy, Download, History, RotateCcw,
-  Info, GitBranch, Loader2, Package, Clock, Check, X,
+  Info, GitBranch, Loader2, Clock, Check, X,
   RefreshCw, Link2, Unlink, Play
 } from "lucide-react"
 import {
@@ -18,7 +18,7 @@ type Tab = "info" | "versions" | "deployments"
 export function SkillDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t: _t } = useTranslation()
   const [activeTab, setActiveTab] = useState<Tab>("info")
   const [diffVersion, setDiffVersion] = useState<number | null>(null)
 

@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
-  Wrench, Search, Plus, Loader2, Trash2, Settings,
-  Circle, RefreshCw, ExternalLink, FolderKanban
+  Wrench, Search, Plus, Loader2, Trash2,
+  Circle, RefreshCw
 } from "lucide-react"
 import {
   useToolsList, useDetectTools, useAddTool,

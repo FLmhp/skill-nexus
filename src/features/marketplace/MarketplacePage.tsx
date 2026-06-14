@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { searchMarketplace, installFromMarketplace, getMarketplaceCategories, refreshMarketplace } from "../../services/ipc"
 import type { MarketplaceItemDTO } from "../../services/ipc"
 import { useUIStore } from "../../stores/useUIStore"
-import { Store, Search, Download, Star, ExternalLink, Loader2, RefreshCw } from "lucide-react"
+import { Store, Search, Download, Star, Loader2, RefreshCw } from "lucide-react"
 import { cn } from "../../lib/cn"
 
 export function MarketplacePage() {
@@ -18,7 +18,7 @@ export function MarketplacePage() {
     queryFn: getMarketplaceCategories,
   })
 
-  const { data: items = [], isLoading, isError } = useQuery({
+  const { data: items = [], isLoading } = useQuery({
     queryKey: ["marketplace", "search", search, selectedCategory, selectedSource],
     queryFn: () => searchMarketplace(search || "", {
       category: selectedCategory || undefined,

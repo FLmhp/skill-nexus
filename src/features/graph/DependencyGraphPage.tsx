@@ -2,18 +2,17 @@ import { useState, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   ReactFlow, Controls, Background, MiniMap, useNodesState, useEdgesState,
-  type Node, type Edge, type Connection, MarkerType, Panel, BackgroundVariant,
+  type Node, type Edge, MarkerType, Panel, BackgroundVariant,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import dagre from "dagre"
 import {
-  ZoomIn, ZoomOut, Maximize2, Search, Loader2, AlertTriangle,
+  Search, Loader2, AlertTriangle,
   GitGraph, Eye, Plus, X
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getFullDependencyGraph } from "../../services/ipc"
-import type { GraphDTO, GraphNode as GraphNodeData } from "../../services/ipc"
-import { cn } from "../../lib/cn"
+import type { GraphDTO } from "../../services/ipc"
 
 // ── Dagre layout ──
 function layoutGraph(dto: GraphDTO): { nodes: Node[]; edges: Edge[] } {
@@ -141,7 +140,7 @@ export function DependencyGraphPage() {
     const term = searchTerm.toLowerCase()
     return nodes.map((n) => ({
       ...n,
-      hidden: !(n.data?.label?.toLowerCase().includes(term)),
+      hidden: !(String(n.data?.label ?? "").toLowerCase().includes(term)),
     }))
   }, [nodes, searchTerm])
 
@@ -196,7 +195,7 @@ export function DependencyGraphPage() {
         <Controls position="bottom-left" />
         <MiniMap
           position="bottom-right"
-          nodeColor={(n) => n.data?.color ?? "#6366f1"}
+          nodeColor={(n): string => (n.data?.color as string) ?? "#6366f1"}
           style={{ backgroundColor: "var(--surface-panel)" }}
         />
 

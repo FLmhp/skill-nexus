@@ -2,15 +2,14 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   FlaskConical, Play, Loader2, CheckCircle, XCircle,
-  Clock, Zap, Save, ChevronDown
+  Clock, Zap, ChevronDown
 } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
 import { useSkillsList } from "../../hooks/useSkills"
 import { cn } from "../../lib/cn"
 import type { TestResultDTO as TestResult } from "../../services/ipc"
 
 export function TestingSandboxPage() {
-  const { t } = useTranslation()
+  const { t: _t } = useTranslation()
 
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
   const [prompt, setPrompt] = useState("")

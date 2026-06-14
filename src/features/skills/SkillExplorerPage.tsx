@@ -1,7 +1,6 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Search, Plus, Package, Grid3X3, List, Loader2, Filter, X } from "lucide-react"
+import { Search, Plus, Package, Grid3X3, List, Loader2, X } from "lucide-react"
 import { useSkillsList, useCreateSkill, useImportSkill } from "../../hooks/useSkills"
 import { SkillCard } from "../../components/shared/SkillCard"
 import { cn } from "../../lib/cn"
@@ -9,7 +8,6 @@ import type { SkillFilters } from "../../services/ipc"
 
 export function SkillExplorerPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
 
   // State
   const [search, setSearch] = useState("")
@@ -87,7 +85,7 @@ export function SkillExplorerPage() {
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (file) {
-          importMutation.mutate(file.path ?? file.name)
+          importMutation.mutate((file as any).path ?? file.name)
         }
       }
       input.click()

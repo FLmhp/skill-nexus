@@ -46,11 +46,6 @@
     "fs": {},
     "shell": {
       "open": true
-    },
-    "sql": {
-      "preload": {
-        "db": "sqlite:skill_nexus.db"
-      }
     }
   }
 }

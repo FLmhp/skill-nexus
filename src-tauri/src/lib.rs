@@ -21,14 +21,12 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .manage(app_state)
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
-            log::info!("Skills Nexus v{} started", env!("CARGO_PKG_VERSION"));
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .build(),
+            )?;
+            log::info!("Skills Nexus v{} started. Hub: {:?}", env!("CARGO_PKG_VERSION"), std::env::current_dir().ok());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

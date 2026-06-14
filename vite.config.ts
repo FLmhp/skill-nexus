@@ -5,6 +5,8 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Tauri requires relative paths — absolute paths (/) fail on custom protocol
+  base: './',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

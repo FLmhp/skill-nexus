@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from "react"
+import { useEffect, Suspense, lazy, Component } from "react"
 import { HashRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useAppStore, type ThemeMode } from "./stores/useAppStore"
@@ -28,6 +28,29 @@ function PageLoader() {
       <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
     </div>
   )
+}
+
+// Error boundary to catch React render failures
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, fontFamily: 'sans-serif', color: '#ef4444' }}>
+          <h1>App Error</h1>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{this.state.error.message}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 11, color: '#888', marginTop: 10 }}>{this.state.error.stack}</pre>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 const queryClient = new QueryClient({
@@ -73,6 +96,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <ErrorBoundary>
         <HashRouter>
           <Routes>
             <Route element={<MainLayout />}>
@@ -91,6 +115,7 @@ export default function App() {
             </Route>
           </Routes>
         </HashRouter>
+        </ErrorBoundary>
       </ThemeProvider>
     </QueryClientProvider>
   )

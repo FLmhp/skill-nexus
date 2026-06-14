@@ -24,6 +24,7 @@ pub struct MarketplaceItemDTO {
 pub struct MarketplaceFilters {
     pub category: Option<String>,
     pub source: Option<String>,
+    #[allow(dead_code)]
     pub page: Option<i64>,
     pub limit: Option<i64>,
 }

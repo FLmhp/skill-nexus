@@ -32,6 +32,9 @@ src-tauri/gen/
 .env.local
 .env.*.local
 
+# Claude Code
+.claude/
+
 # IDE
 *.swp
 *.swo

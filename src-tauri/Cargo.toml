@@ -1,8 +1,9 @@
 [package]
 name = "skill-nexus"
-version = "0.2.0"
+version = "0.2.1"
 description = "Cross-platform Skills visualization management tool"
 authors = ["Skill Nexus"]
+license = "MIT"
 edition = "2021"
 
 [lib]

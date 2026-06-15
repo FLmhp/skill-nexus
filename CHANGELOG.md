@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-06-15
+
+### Changed
+- Marketplace cards no longer display cross-source star/rating values as a unified score.
+- Security scanning now follows the SkillSpector static-analysis category model more closely, including taint tracking, hidden instruction, trigger abuse, MCP poisoning, Unicode deception, and malware-indicator checks.
+- Agent defaults now enable only agents whose skills directory exists on the current machine.
+- Local skill metadata now preserves real install time, uses SKILL.md file modification time for updates, and fills source/author from frontmatter, file URL, or detected agent context.
+
+### Fixed
+- Windows release builds no longer open a console window behind the desktop app.
+- Windows installer/shortcut icon configuration now points at the logo-derived app icon.
+- Sidebar version text now comes from the package version instead of a hard-coded stale value.
+- Scan/import de-duplicates same-named local skills across multiple scan roots, including duplicate `agent-reach` copies.
+- Graph relations now include inferred references from SKILL.md body mentions in addition to explicit frontmatter dependency metadata.
+- `skills.sh` directory search now parses public directory-page GitHub links instead of calling the old 404 API endpoint.
+
 ## [0.2.0] - 2026-06-15
 
 ### Added

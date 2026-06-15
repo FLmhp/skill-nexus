@@ -1,4 +1,5 @@
 use crate::models::{MarketplaceSearchResponse, MarketplaceSkill, MarketplaceSourceError};
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashSet;
 
@@ -90,11 +91,11 @@ pub async fn search_marketplace(
         }
     }
 
-    if selected == SKILLS_SH_SOURCE {
-        source_errors.push(source_error(
-            SKILLS_SH_SOURCE,
-            "skills.sh does not expose a stable public search API; directory scraping is disabled by default.",
-        ));
+    if selected == "all" || selected == SKILLS_SH_SOURCE {
+        match search_skills_sh_directory(&client, query, limit, installed_urls).await {
+            Ok(mut items) => skills.append(&mut items),
+            Err(message) => source_errors.push(source_error(SKILLS_SH_SOURCE, message)),
+        }
     }
 
     Ok(MarketplaceSearchResponse {
@@ -103,6 +104,27 @@ pub async fn search_marketplace(
         page,
         limit,
     })
+}
+
+async fn search_skills_sh_directory(
+    client: &reqwest::Client,
+    query: &str,
+    limit: u32,
+    installed_urls: &HashSet<String>,
+) -> Result<Vec<MarketplaceSkill>, String> {
+    let response = client
+        .get("https://www.skills.sh/")
+        .header("User-Agent", USER_AGENT)
+        .send()
+        .await
+        .map_err(|e| format!("skills.sh directory request failed: {e}"))?;
+    let status = response.status();
+    let body = response.text().await.map_err(|e| e.to_string())?;
+    if !status.is_success() {
+        return Err(format!("skills.sh directory returned {status}"));
+    }
+
+    Ok(map_skills_sh_directory(&body, query, limit, installed_urls))
 }
 
 async fn search_skillsmp(
@@ -238,6 +260,49 @@ fn source_error(source: &str, message: impl Into<String>) -> MarketplaceSourceEr
     }
 }
 
+fn map_skills_sh_directory(
+    html: &str,
+    query: &str,
+    limit: u32,
+    installed_urls: &HashSet<String>,
+) -> Vec<MarketplaceSkill> {
+    let query = query.to_lowercase();
+    let re = Regex::new(r#"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"#)
+        .expect("skills.sh GitHub URL regex should compile");
+    let mut seen = HashSet::new();
+    re.find_iter(html)
+        .filter_map(|matched| {
+            let source_url = matched.as_str().trim_end_matches('\\').to_string();
+            if !seen.insert(source_url.clone()) {
+                return None;
+            }
+            let mut parts = source_url.trim_start_matches("https://github.com/").split('/');
+            let owner = parts.next()?.to_string();
+            let repo = parts.next()?.trim_end_matches(".git").to_string();
+            let name = repo.replace(['-', '_'], " ");
+            let searchable = format!("{} {} {}", owner, repo, name).to_lowercase();
+            if !searchable.contains(&query) {
+                return None;
+            }
+            Some(MarketplaceSkill {
+                id: format!("skills-sh-{owner}-{repo}"),
+                source: SKILLS_SH_SOURCE.to_string(),
+                name,
+                description: "skills.sh directory entry. Open the source to inspect and install a specific SKILL.md.".to_string(),
+                author: owner,
+                version: "latest".to_string(),
+                downloads: 0,
+                rating: 0.0,
+                source_url: source_url.clone(),
+                detail_url: Some("https://www.skills.sh/".to_string()),
+                tags: vec!["directory".to_string()],
+                installed: installed_urls.contains(&source_url),
+            })
+        })
+        .take(limit as usize)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -288,5 +353,20 @@ mod tests {
         assert_eq!(mapped.len(), 1);
         assert_eq!(mapped[0].source, "mcpmarket");
         assert_eq!(mapped[0].rating, 42.0);
+    }
+
+    #[test]
+    fn maps_skills_sh_directory_github_links() {
+        let html = r#"
+          <a href="https://github.com/vercel-labs/skills">Vercel Skills</a>
+          <script>self.__next_f.push("https://github.com/vercel-labs/skills")</script>
+        "#;
+
+        let mapped = map_skills_sh_directory(html, "vercel", 10, &HashSet::new());
+
+        assert_eq!(mapped.len(), 1);
+        assert_eq!(mapped[0].source, "skills-sh-directory");
+        assert_eq!(mapped[0].author, "vercel-labs");
+        assert_eq!(mapped[0].source_url, "https://github.com/vercel-labs/skills");
     }
 }

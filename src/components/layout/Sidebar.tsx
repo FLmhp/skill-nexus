@@ -93,7 +93,7 @@ export default function Sidebar() {
 
       <div className="border-t border-border p-2">
         {!sidebarCollapsed && (
-          <p className="px-3 py-2 text-xs text-muted-foreground">Skill Nexus v0.1.0</p>
+          <p className="px-3 py-2 text-xs text-muted-foreground">Skill Nexus v{__APP_VERSION__}</p>
         )}
       </div>
     </aside>

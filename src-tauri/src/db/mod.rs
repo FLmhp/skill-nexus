@@ -75,7 +75,7 @@ pub fn init_db(app: &tauri::AppHandle) -> Result<(), String> {
             skills_path TEXT NOT NULL,
             config_path TEXT,
             icon TEXT,
-            enabled INTEGER NOT NULL DEFAULT 1
+            enabled INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS agent_skills (
@@ -165,9 +165,10 @@ pub fn insert_default_agents(conn: &Connection) -> Result<(), String> {
 
     for (id, name, agent_type, skills_path) in defaults {
         let expanded_path = expand_tilde(skills_path);
+        let detected = std::path::Path::new(&expanded_path).is_dir();
         conn.execute(
-            "INSERT OR IGNORE INTO agents (id, name, agent_type, skills_path, enabled) VALUES (?1, ?2, ?3, ?4, 1)",
-            rusqlite::params![id, name, agent_type, expanded_path],
+            "INSERT OR IGNORE INTO agents (id, name, agent_type, skills_path, enabled) VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![id, name, agent_type, expanded_path, detected as i32],
         )
         .map_err(|e| e.to_string())?;
     }

@@ -4,7 +4,7 @@ import { installFromUrl } from "@/api/marketplace";
 import { cn } from "@/lib/utils";
 import { toUserError } from "@/lib/apiError";
 import { useI18n } from "@/i18n";
-import { Download, Star, User, Check, Loader2, ExternalLink } from "lucide-react";
+import { Download, User, Check, Loader2, ExternalLink } from "lucide-react";
 import { open } from "@tauri-apps/plugin-shell";
 
 interface MarketplaceCardProps {
@@ -51,10 +51,7 @@ export default function MarketplaceCard({ skill, onInstalled }: MarketplaceCardP
     <div className="rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30">
       <div className="flex items-start justify-between mb-3">
         <h3 className="font-semibold text-sm text-foreground">{skill.name}</h3>
-        <div className="flex items-center gap-1 text-xs text-amber-400" title={`${skill.source} rating/stars`}>
-          <Star className="h-3 w-3 fill-current" />
-          {skill.rating.toFixed(1)}
-        </div>
+        <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{skill.source}</span>
       </div>
 
       <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
@@ -68,7 +65,6 @@ export default function MarketplaceCard({ skill, onInstalled }: MarketplaceCardP
         </span>
         <span>v{skill.version}</span>
         <span>{(skill.downloads / 1000).toFixed(1)}k</span>
-        <span className="rounded bg-muted px-1.5 py-0.5">{skill.source}</span>
       </div>
 
       {skill.tags.length > 0 && (

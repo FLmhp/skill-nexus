@@ -9,6 +9,8 @@
 - `logo.png` 是本项目的 logo 源图。应用图标、侧边栏品牌和关于信息应优先从它派生。
 - `src/i18n/en.ts`、`src/i18n/zh.ts` 和 `src/i18n/index.ts` 构成当前轻量 i18n 入口。
 - 当前测试基线仍较薄。新增行为应补充聚焦的 Vitest 或 Cargo 测试，不得用构建通过替代测试结论。
+- Windows release 构建使用 GUI subsystem，运行应用不应出现额外控制台黑框。
+- 项目许可证为 MIT，根目录 `LICENSE`、`package.json` 与 `src-tauri/Cargo.toml` 必须保持一致。
 
 ## 1. 启动检查
 
@@ -132,16 +134,20 @@ src/
 
 后续 Agent 必须按以下 SkillNexus 当前实现继续推进：
 
-- `logo.png` 是唯一 logo 源图，已用于应用品牌和 Tauri 图标派生；新增品牌入口应继续复用它。
+- `logo.png` 是唯一 logo 源图，已用于应用品牌、Tauri 图标派生和 Windows installer/shortcut 图标；新增品牌入口应继续复用它。
 - Settings 已通过 SQLite 持久化 `language`、`extra_scan_paths`、`auto_watch_enabled`，清库后会恢复默认 agents。
 - 自动监听技能目录是可选能力，默认关闭；启用后监听 enabled agent paths 和 extra scan paths，并防抖触发重扫。
+- 默认 agents 初始化时只启用当前计算机实际存在的 skills 目录；不存在的 agent 默认 disabled。
 - `src/i18n/index.ts` 是当前轻量 i18n 入口；新增主 UI 文案应补齐 `en.ts` 与 `zh.ts`。
 - `scan_and_import` 返回 `ScanImportResult`，包含真实 `skills` 和扫描摘要；前端不得自行猜测导入/更新状态。
-- `scan_and_import` 使用 enabled agents + extra scan paths，重新扫描时更新已有 skill，并从 metadata 关系写入 `skill_relations`。
+- `scan_and_import` 使用 enabled agents + extra scan paths，重新扫描时按 path 或逻辑 skill 名称更新已有 skill，并清理同名本地重复项。
+- `scan_and_import` 从 frontmatter metadata 和 SKILL.md 正文提及中推断关系后写入 `skill_relations`。
 - SKILL.md frontmatter 使用 `yaml-rust` 结构化解析，并保留 malformed/missing frontmatter fallback。
 - Security 风险分数统一为 0-100；Dashboard、SkillDetail、Security card 等 UI 必须按 0-100 展示。
+- Security 静态扫描规则参考 NVIDIA SkillSpector 的类别模型，包括 prompt injection、data exfiltration、privilege escalation、supply chain、excessive agency、output handling、system prompt leakage、memory poisoning、tool misuse、rogue agent、trigger abuse、dangerous code/AST、taint tracking、YARA-like indicators、MCP least privilege 和 MCP tool poisoning。
 - Marketplace 查询来源为 SkillsMP `https://skillsmp.com/api/v1/skills/search` 和 MCPMarket `https://mcpmarket.cn/api/servers`。
-- `skills.sh` 目前只作为目录网页来源保留，未发现稳定公开搜索 API，不得继续调用旧的 `https://www.skills.sh/api/skills`。
+- `skills.sh` 作为目录网页来源：解析首页公开 GitHub 仓库链接并按查询词过滤；不得继续调用旧的 `https://www.skills.sh/api/skills`。
+- Marketplace UI 不显示跨来源 rating/stars 作为统一评分；不同平台指标只能作为来源特定信息处理。
 - Marketplace 安装只允许安全 URL，并限制写入 app data 下的 sanitize 安装目录。
 - MCP 新增/更新返回保存后的 `McpServer`；`test_mcp_server` 只做 stdio command/字段验证和 HTTP 可达性诊断，不管理常驻进程生命周期。
 - Agent 同步返回 `AgentSyncResult`；单 agent 同步、全量同步和单 skill 同步都必须保留 canonical path guard。

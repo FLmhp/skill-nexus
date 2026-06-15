@@ -9,6 +9,9 @@ pub struct SkillScanEntry {
     pub author: Option<String>,
     pub version: Option<String>,
     pub license: Option<String>,
+    pub source_url: Option<String>,
+    pub updated_at: Option<String>,
+    pub content: String,
     pub metadata_json: Option<String>,
     pub relations: Vec<SkillRelationTarget>,
 }
@@ -43,12 +46,15 @@ pub fn scan_skills(paths: &[String]) -> Result<Vec<SkillScanEntry>, String> {
                 match parser::parse_skill_manifest(&content) {
                     Ok(manifest) => {
                         results.push(SkillScanEntry {
-                            path: parent,
+                            path: parent.clone(),
                             name: manifest.name,
                             description: manifest.description,
                             author: manifest.author,
                             version: manifest.version,
                             license: manifest.license,
+                            source_url: manifest.source_url.or_else(|| file_source_url(&parent)),
+                            updated_at: file_updated_at(entry_path),
+                            content,
                             metadata_json: manifest.metadata_json,
                             relations: manifest.relations,
                         });
@@ -61,12 +67,15 @@ pub fn scan_skills(paths: &[String]) -> Result<Vec<SkillScanEntry>, String> {
                             .unwrap_or("unnamed")
                             .to_string();
                         results.push(SkillScanEntry {
-                            path: parent,
+                            path: parent.clone(),
                             name: fallback_name,
                             description: String::new(),
                             author: None,
                             version: None,
                             license: None,
+                            source_url: file_source_url(&parent),
+                            updated_at: file_updated_at(entry_path),
+                            content,
                             metadata_json: None,
                             relations: Vec::new(),
                         });
@@ -77,6 +86,16 @@ pub fn scan_skills(paths: &[String]) -> Result<Vec<SkillScanEntry>, String> {
     }
 
     Ok(results)
+}
+
+fn file_source_url(path: &str) -> Option<String> {
+    Some(format!("file://{}", path.replace('\\', "/")))
+}
+
+fn file_updated_at(path: &std::path::Path) -> Option<String> {
+    let modified = std::fs::metadata(path).ok()?.modified().ok()?;
+    let datetime: chrono::DateTime<chrono::Utc> = modified.into();
+    Some(datetime.format("%Y-%m-%dT%H:%M:%SZ").to_string())
 }
 
 pub fn validate_scan_paths(paths: &[String]) -> Result<Vec<std::path::PathBuf>, String> {
@@ -197,6 +216,8 @@ mod tests {
 
         assert_eq!(scanned.len(), 1);
         assert_eq!(scanned[0].name, "Real Skill");
+        assert!(scanned[0].source_url.as_deref().unwrap().starts_with("file://"));
+        assert!(scanned[0].updated_at.is_some());
 
         let _ = fs::remove_dir_all(&root);
     }

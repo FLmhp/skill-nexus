@@ -8,6 +8,7 @@ pub struct SkillManifest {
     pub author: Option<String>,
     pub version: Option<String>,
     pub license: Option<String>,
+    pub source_url: Option<String>,
     pub relations: Vec<SkillRelationTarget>,
     pub metadata_json: Option<String>,
 }
@@ -47,9 +48,10 @@ pub fn parse_skill_manifest(content: &str) -> Result<SkillManifest, String> {
     let mut manifest = SkillManifest {
         name: first_string(doc, &["name", "title"]).unwrap_or_else(|| "unnamed".to_string()),
         description: first_string(doc, &["description", "desc", "summary"]).unwrap_or_default(),
-        author: first_string(doc, &["author", "maintainer"]),
+        author: first_string(doc, &["author", "authors", "maintainer", "maintainers"]),
         version: first_string(doc, &["version", "rev", "release"]),
         license: first_string(doc, &["license"]),
+        source_url: first_string(doc, &["source", "source_url", "repository", "repo", "url", "homepage"]),
         relations: relation_targets(doc),
         metadata_json: metadata_json(doc),
     };
@@ -115,17 +117,22 @@ fn fallback_manifest(content: &str) -> SkillManifest {
 
 fn first_string(doc: &Yaml, keys: &[&str]) -> Option<String> {
     keys.iter()
-        .filter_map(|key| yaml_scalar_to_string(&doc[*key]))
+        .filter_map(|key| yaml_value_to_string(&doc[*key]))
         .map(|value| value.trim().to_string())
         .find(|value| !value.is_empty())
 }
 
-fn yaml_scalar_to_string(value: &Yaml) -> Option<String> {
+fn yaml_value_to_string(value: &Yaml) -> Option<String> {
     match value {
         Yaml::String(value) => Some(value.clone()),
         Yaml::Integer(value) => Some(value.to_string()),
         Yaml::Real(value) => Some(value.clone()),
         Yaml::Boolean(value) => Some(value.to_string()),
+        Yaml::Array(values) => values.iter().filter_map(yaml_value_to_string).next(),
+        Yaml::Hash(map) => ["url", "href", "repository", "repo"]
+            .iter()
+            .filter_map(|key| yaml_value_to_string(map.get(&Yaml::String((*key).to_string()))?))
+            .next(),
         _ => None,
     }
 }
@@ -138,6 +145,9 @@ fn relation_targets(doc: &Yaml) -> Vec<SkillRelationTarget> {
         ("references", "references"),
         ("reference", "references"),
         ("extends", "extends"),
+        ("skills", "references"),
+        ("includes", "references"),
+        ("requires", "depends"),
     ] {
         collect_relation_values(&doc[key], relation_type, &mut relations);
     }
@@ -176,6 +186,9 @@ fn metadata_json(doc: &Yaml) -> Option<String> {
         "references",
         "reference",
         "extends",
+        "skills",
+        "includes",
+        "requires",
     ] {
         let values = relation_values(&doc[key]);
         if !values.is_empty() {
@@ -225,6 +238,7 @@ description: Finds sources
 author: Solo
 version: 1.2.0
 license: MIT
+repository: https://github.com/example/research
 depends:
   - Browser
 references: docs
@@ -238,6 +252,10 @@ references: docs
         assert_eq!(manifest.author.as_deref(), Some("Solo"));
         assert_eq!(manifest.version.as_deref(), Some("1.2.0"));
         assert_eq!(manifest.license.as_deref(), Some("MIT"));
+        assert_eq!(
+            manifest.source_url.as_deref(),
+            Some("https://github.com/example/research")
+        );
         assert_eq!(manifest.relations.len(), 2);
     }
 

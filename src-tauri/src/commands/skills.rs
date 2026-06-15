@@ -46,21 +46,57 @@ pub fn scan_and_import_impl(app: &AppHandle) -> Result<ScanImportResult, String>
 
     let scanned = scanner::scan_skills(&paths)?;
     summary.discovered = scanned.len() as i32;
+    let mut deduped = Vec::new();
+    let mut duplicate_paths = Vec::new();
+    let mut seen_keys = std::collections::HashSet::new();
+    for entry in scanned {
+        let key = skill_key(&entry.name, &entry.path);
+        if seen_keys.insert(key) {
+            deduped.push(entry);
+        } else {
+            duplicate_paths.push(entry.path);
+            summary.skipped += 1;
+        }
+    }
 
     let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let existing = db::skills::get_all_skills(app)?;
 
-    for entry in &scanned {
-        let existing_skill = existing.iter().find(|s| s.path == entry.path);
+    for duplicate_path in &duplicate_paths {
+        if let Some(duplicate) = existing
+            .iter()
+            .find(|skill| skill.path == *duplicate_path && skill.source_type == "local")
+        {
+            db::skills::delete_skill(app, &duplicate.id)?;
+        }
+    }
+
+    for entry in &deduped {
+        let entry_key = skill_key(&entry.name, &entry.path);
+        let existing_skill = existing.iter().find(|s| {
+            s.path == entry.path || (s.source_type == "local" && skill_key(&s.name, &s.path) == entry_key)
+        });
+        if let Some(conflict) = existing
+            .iter()
+            .find(|s| s.path == entry.path && Some(s.id.as_str()) != existing_skill.map(|skill| skill.id.as_str()))
+        {
+            db::skills::delete_skill(app, &conflict.id)?;
+        }
         let file_count = count_files(&entry.path);
-        let agent_type = agents
+        let agent = agents
             .iter()
             .find(|a| {
                 entry
                     .path
                     .starts_with(&expand_tilde_in_path(&a.skills_path))
-            })
-            .map(|a| a.agent_type.clone());
+            });
+        let agent_type = agent.map(|a| a.agent_type.clone());
+        let inferred_author = entry
+            .author
+            .clone()
+            .or_else(|| agent.map(|a| a.name.clone()))
+            .or_else(|| infer_author_from_path(&entry.path));
+        let updated_at = entry.updated_at.clone().unwrap_or_else(|| now.clone());
 
         let dir_name = std::path::Path::new(&entry.path)
             .file_name()
@@ -75,12 +111,12 @@ pub fn scan_and_import_impl(app: &AppHandle) -> Result<ScanImportResult, String>
                 description: entry.description.clone(),
                 path: entry.path.clone(),
                 source_type: existing_skill.source_type.clone(),
-                source_url: existing_skill.source_url.clone(),
+                source_url: entry.source_url.clone().or_else(|| existing_skill.source_url.clone()),
                 version: entry.version.clone(),
-                author: entry.author.clone(),
+                author: inferred_author,
                 license: entry.license.clone(),
                 installed_at: existing_skill.installed_at.clone(),
-                updated_at: now.clone(),
+                updated_at,
                 metadata_json: entry.metadata_json.clone(),
                 file_count,
                 agent_type,
@@ -92,12 +128,12 @@ pub fn scan_and_import_impl(app: &AppHandle) -> Result<ScanImportResult, String>
                 description: entry.description.clone(),
                 path: entry.path.clone(),
                 source_type: "local".to_string(),
-                source_url: None,
+                source_url: entry.source_url.clone(),
                 version: entry.version.clone(),
-                author: entry.author.clone(),
+                author: inferred_author,
                 license: entry.license.clone(),
                 installed_at: now.clone(),
-                updated_at: now.clone(),
+                updated_at,
                 metadata_json: entry.metadata_json.clone(),
                 file_count,
                 agent_type,
@@ -114,33 +150,88 @@ pub fn scan_and_import_impl(app: &AppHandle) -> Result<ScanImportResult, String>
     }
 
     let all_skills = db::skills::get_all_skills(app)?;
-    for entry in &scanned {
+    for entry in &deduped {
         let Some(source_skill) = all_skills.iter().find(|skill| skill.path == entry.path) else {
             continue;
         };
         db::skills::delete_relations_for_source(app, &source_skill.id)?;
-        for relation in &entry.relations {
-            let Some(target_skill) = resolve_relation_target(&all_skills, &relation.target) else {
-                continue;
-            };
-            if target_skill.id == source_skill.id {
-                continue;
+        let mut relations = entry.relations.clone();
+        relations.extend(infer_content_relations(&entry.content, source_skill, &all_skills));
+        let mut relation_keys = std::collections::HashSet::new();
+        for relation in &relations {
+            if let Some(target_skill) = resolve_relation_target(&all_skills, &relation.target) {
+                insert_resolved_relation(app, source_skill, target_skill, &relation.relation_type, &mut relation_keys)?;
             }
-            let relation = SkillRelation {
-                id: sha256_id(&format!(
-                    "{}:{}:{}",
-                    source_skill.id, target_skill.id, relation.relation_type
-                )),
-                source_skill_id: source_skill.id.clone(),
-                target_skill_id: target_skill.id.clone(),
-                relation_type: relation.relation_type.clone(),
-            };
-            db::skills::insert_relation(app, &relation)?;
         }
     }
 
     let skills = db::skills::get_all_skills(app)?;
     Ok(ScanImportResult { skills, summary })
+}
+
+fn insert_resolved_relation(
+    app: &AppHandle,
+    source_skill: &Skill,
+    target_skill: &Skill,
+    relation_type: &str,
+    relation_keys: &mut std::collections::HashSet<String>,
+) -> Result<(), String> {
+    if target_skill.id == source_skill.id {
+        return Ok(());
+    }
+    let key = format!("{}:{}:{}", source_skill.id, target_skill.id, relation_type);
+    if !relation_keys.insert(key.clone()) {
+        return Ok(());
+    }
+    let relation = SkillRelation {
+        id: sha256_id(&key),
+        source_skill_id: source_skill.id.clone(),
+        target_skill_id: target_skill.id.clone(),
+        relation_type: relation_type.to_string(),
+    };
+    db::skills::insert_relation(app, &relation)
+}
+
+fn infer_content_relations(
+    content: &str,
+    source_skill: &Skill,
+    skills: &[Skill],
+) -> Vec<parser::SkillRelationTarget> {
+    skills
+        .iter()
+        .filter(|target| target.id != source_skill.id)
+        .filter(|target| content_mentions_skill(content, target))
+        .map(|target| parser::SkillRelationTarget {
+            relation_type: "references".to_string(),
+            target: target.id.clone(),
+        })
+        .collect()
+}
+
+fn content_mentions_skill(content: &str, skill: &Skill) -> bool {
+    let content = content.to_lowercase();
+    let name = skill.name.to_lowercase();
+    let dir_name = std::path::Path::new(&skill.path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    let mentioned = [name.as_str(), dir_name.as_str()]
+        .into_iter()
+        .filter(|candidate| candidate.len() >= 4)
+        .any(|candidate| contains_skill_token(&content, candidate));
+    mentioned
+}
+
+fn contains_skill_token(content: &str, candidate: &str) -> bool {
+    content.contains(&format!("skills/{candidate}"))
+        || content.contains(&format!("skills\\{candidate}"))
+        || content.contains(&format!("@{candidate}"))
+        || content.contains(&format!("${candidate}"))
+        || content.contains(&format!("`{candidate}`"))
+        || content.contains(&format!("[{candidate}]"))
+        || content.contains(candidate)
 }
 
 #[tauri::command]
@@ -227,6 +318,38 @@ fn match_key(value: &str) -> String {
         .collect()
 }
 
+fn skill_key(name: &str, path: &str) -> String {
+    let name_key = match_key(name);
+    if !name_key.is_empty() && name_key != "unnamed" {
+        return name_key;
+    }
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(match_key)
+        .unwrap_or_default()
+}
+
+fn infer_author_from_path(path: &str) -> Option<String> {
+    let normalized = path.replace('\\', "/").to_lowercase();
+    if normalized.contains("/.codex/skills") {
+        Some("Codex".to_string())
+    } else if normalized.contains("/.agents/skills") {
+        Some("Agent Skills".to_string())
+    } else if normalized.contains("/.claude/skills") {
+        Some("Claude Code".to_string())
+    } else if normalized.contains("/.gemini/skills") {
+        Some("Gemini CLI".to_string())
+    } else {
+        std::path::Path::new(path)
+            .parent()
+            .and_then(|parent| parent.file_name())
+            .and_then(|name| name.to_str())
+            .map(|name| name.replace(['-', '_'], " "))
+            .filter(|name| !name.trim().is_empty())
+    }
+}
+
 fn expand_tilde_in_path(path: &str) -> String {
     if !path.starts_with('~') {
         return path.to_string();
@@ -298,5 +421,48 @@ mod tests {
         assert!(resolve_relation_target(&skills, "shared skill").is_some());
         assert!(resolve_relation_target(&skills, "shared-skill").is_some());
         assert!(resolve_relation_target(&skills, "missing").is_none());
+    }
+
+    #[test]
+    fn skill_key_deduplicates_same_named_skills_across_paths() {
+        assert_eq!(
+            skill_key("agent-reach", "C:\\Users\\solo\\.codex\\skills\\agent-reach"),
+            skill_key("Agent Reach", "C:\\Users\\solo\\.agents\\skills\\agent-reach")
+        );
+    }
+
+    #[test]
+    fn content_relation_detection_finds_skill_mentions() {
+        let source = Skill {
+            id: "source".into(),
+            name: "Using Superpowers".into(),
+            description: String::new(),
+            path: "C:\\skills\\using-superpowers".into(),
+            source_type: "local".into(),
+            source_url: None,
+            version: None,
+            author: None,
+            license: None,
+            installed_at: "2026-01-01T00:00:00Z".into(),
+            updated_at: "2026-01-01T00:00:00Z".into(),
+            metadata_json: None,
+            file_count: 1,
+            agent_type: None,
+        };
+        let target = Skill {
+            id: "target".into(),
+            name: "Agent Skills".into(),
+            path: "C:\\skills\\agent-skills".into(),
+            ..source.clone()
+        };
+
+        let relations = infer_content_relations(
+            "Read skills/agent-skills/SKILL.md before continuing.",
+            &source,
+            &[source.clone(), target],
+        );
+
+        assert_eq!(relations.len(), 1);
+        assert_eq!(relations[0].target, "target");
     }
 }

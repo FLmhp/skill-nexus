@@ -452,7 +452,7 @@ mod tests {
         let target = Skill {
             id: "target".into(),
             name: "Agent Skills".into(),
-            path: "C:\\skills\\agent-skills".into(),
+            path: "/skills/agent-skills".into(),
             ..source.clone()
         };
 

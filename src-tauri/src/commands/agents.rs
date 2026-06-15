@@ -1,7 +1,7 @@
 use tauri::AppHandle;
 
 use crate::db;
-use crate::models::Agent;
+use crate::models::{Agent, AgentSyncFailure, AgentSyncResult};
 use crate::services::syncer;
 
 #[tauri::command]
@@ -20,14 +20,34 @@ pub async fn sync_agent_skill(
     skill_id: String,
     agent_id: String,
     enabled: bool,
-) -> Result<(), String> {
+) -> Result<AgentSyncResult, String> {
     let conn = db::get_conn(&app)?;
+    let mut result = AgentSyncResult {
+        agent_id: Some(agent_id.clone()),
+        ..AgentSyncResult::default()
+    };
+    let agent = db::agents::get_agent_by_id(&app, &agent_id)?;
+    if !agent.enabled {
+        result.skipped = 1;
+        result.message = format!("Agent {} is disabled", agent.name);
+        return Ok(result);
+    }
+
     if enabled {
         let skill = db::skills::get_skill_by_id(&app, &skill_id)?;
-        let agent = db::agents::get_agent_by_id(&app, &agent_id)?;
 
         db::agents::sync_skill_to_agent(&app, &skill_id, &agent_id)?;
-        syncer::sync_skill(&skill.path, &agent.skills_path, "copy")?;
+        match syncer::sync_skill(&skill.path, &agent.skills_path, "copy") {
+            Ok(()) => result.synced = 1,
+            Err(error) => {
+                result.failed = 1;
+                result.failures.push(AgentSyncFailure {
+                    skill_id: skill.id,
+                    skill_name: skill.name,
+                    error,
+                });
+            }
+        }
     } else {
         use rusqlite::params;
         conn.execute(
@@ -41,14 +61,31 @@ pub async fn sync_agent_skill(
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
-        let agent = db::agents::get_agent_by_id(&app, &agent_id)?;
-        let _ = syncer::remove_sync(skill_name, &agent.skills_path);
+        match syncer::remove_sync(skill_name, &agent.skills_path) {
+            Ok(()) => result.synced = 1,
+            Err(error) => {
+                result.failed = 1;
+                result.failures.push(AgentSyncFailure {
+                    skill_id: skill.id,
+                    skill_name: skill.name,
+                    error,
+                });
+            }
+        }
     }
-    Ok(())
+    result.message = format!(
+        "Synced {}, failed {}, skipped {}",
+        result.synced, result.failed, result.skipped
+    );
+    Ok(result)
 }
 
 #[tauri::command]
-pub async fn sync_all_agents(app: AppHandle) -> Result<String, String> {
-    syncer::sync_all(&app)?;
-    Ok("All agents synced successfully".to_string())
+pub async fn sync_all_agents(app: AppHandle) -> Result<AgentSyncResult, String> {
+    syncer::sync_all(&app)
+}
+
+#[tauri::command]
+pub async fn sync_agent(app: AppHandle, agent_id: String) -> Result<AgentSyncResult, String> {
+    syncer::sync_agent(&app, &agent_id)
 }

@@ -114,26 +114,17 @@ pub fn update_skill(app: &tauri::AppHandle, skill: &Skill) -> Result<(), String>
 
 pub fn delete_skill(app: &tauri::AppHandle, id: &str) -> Result<(), String> {
     let conn = db::get_conn(app)?;
-    conn.execute(
-        "DELETE FROM skill_tags WHERE skill_id = ?1",
-        params![id],
-    )
-    .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM skill_tags WHERE skill_id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
     conn.execute(
         "DELETE FROM skill_relations WHERE source_skill_id = ?1 OR target_skill_id = ?1",
         params![id],
     )
     .map_err(|e| e.to_string())?;
-    conn.execute(
-        "DELETE FROM agent_skills WHERE skill_id = ?1",
-        params![id],
-    )
-    .map_err(|e| e.to_string())?;
-    conn.execute(
-        "DELETE FROM scan_results WHERE skill_id = ?1",
-        params![id],
-    )
-    .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM agent_skills WHERE skill_id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM scan_results WHERE skill_id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM skills WHERE id = ?1", params![id])
         .map_err(|e| e.to_string())?;
     Ok(())
@@ -176,6 +167,19 @@ pub fn insert_relation(app: &tauri::AppHandle, relation: &SkillRelation) -> Resu
             relation.target_skill_id,
             relation.relation_type,
         ],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+pub fn delete_relations_for_source(
+    app: &tauri::AppHandle,
+    source_skill_id: &str,
+) -> Result<(), String> {
+    let conn = db::get_conn(app)?;
+    conn.execute(
+        "DELETE FROM skill_relations WHERE source_skill_id = ?1",
+        params![source_skill_id],
     )
     .map_err(|e| e.to_string())?;
     Ok(())

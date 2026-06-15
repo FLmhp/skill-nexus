@@ -2,13 +2,18 @@ import { useState } from "react";
 import type { MarketplaceSkill } from "@/types";
 import { installFromUrl } from "@/api/marketplace";
 import { cn } from "@/lib/utils";
-import { Download, Star, User, Check, Loader2 } from "lucide-react";
+import { toUserError } from "@/lib/apiError";
+import { useI18n } from "@/i18n";
+import { Download, Star, User, Check, Loader2, ExternalLink } from "lucide-react";
+import { open } from "@tauri-apps/plugin-shell";
 
 interface MarketplaceCardProps {
   skill: MarketplaceSkill;
+  onInstalled?: () => Promise<void> | void;
 }
 
-export default function MarketplaceCard({ skill }: MarketplaceCardProps) {
+export default function MarketplaceCard({ skill, onInstalled }: MarketplaceCardProps) {
+  const { t } = useI18n();
   const [installed, setInstalled] = useState(skill.installed);
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,18 +24,34 @@ export default function MarketplaceCard({ skill }: MarketplaceCardProps) {
     try {
       await installFromUrl(skill.source_url);
       setInstalled(true);
+      await onInstalled?.();
     } catch (err) {
-      setError(String(err));
+      setError(toUserError(err));
     } finally {
       setInstalling(false);
     }
   };
 
+  const handleOpenSource = async () => {
+    if (!skill.source_url) return;
+    setInstalling(true);
+    setError(null);
+    try {
+      await open(skill.source_url);
+    } catch (err) {
+      setError(toUserError(err));
+    } finally {
+      setInstalling(false);
+    }
+  };
+
+  const isMcpSource = skill.source === "mcpmarket";
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30">
       <div className="flex items-start justify-between mb-3">
         <h3 className="font-semibold text-sm text-foreground">{skill.name}</h3>
-        <div className="flex items-center gap-1 text-xs text-amber-400">
+        <div className="flex items-center gap-1 text-xs text-amber-400" title={`${skill.source} rating/stars`}>
           <Star className="h-3 w-3 fill-current" />
           {skill.rating.toFixed(1)}
         </div>
@@ -47,6 +68,7 @@ export default function MarketplaceCard({ skill }: MarketplaceCardProps) {
         </span>
         <span>v{skill.version}</span>
         <span>{(skill.downloads / 1000).toFixed(1)}k</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">{skill.source}</span>
       </div>
 
       {skill.tags.length > 0 && (
@@ -67,8 +89,10 @@ export default function MarketplaceCard({ skill }: MarketplaceCardProps) {
       )}
 
       <button
-        onClick={handleInstall}
+        onClick={isMcpSource ? handleOpenSource : handleInstall}
         disabled={installed || installing}
+        title={isMcpSource ? "Open source repository" : "Install skill"}
+        aria-label={isMcpSource ? `Open ${skill.name} source repository` : `Install ${skill.name}`}
         className={cn(
           "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
           installed
@@ -80,10 +104,18 @@ export default function MarketplaceCard({ skill }: MarketplaceCardProps) {
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : installed ? (
           <Check className="h-3.5 w-3.5" />
+        ) : isMcpSource ? (
+          <ExternalLink className="h-3.5 w-3.5" />
         ) : (
           <Download className="h-3.5 w-3.5" />
         )}
-        {installed ? "Installed" : installing ? "Installing..." : "Install"}
+        {installed
+          ? t("marketplace.card.installed")
+          : installing
+            ? t("marketplace.card.working")
+            : isMcpSource
+              ? t("marketplace.card.openSource")
+              : t("marketplace.card.install")}
       </button>
     </div>
   );

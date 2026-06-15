@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import type { ScanResult } from "@/types";
 import * as scanApi from "@/api/scan";
+import { toUserError } from "@/lib/apiError";
 
 export function useScan() {
   const [results, setResults] = useState<ScanResult[]>([]);
@@ -14,7 +15,7 @@ export function useScan() {
       const data = await scanApi.scanAllSkills();
       setResults(data);
     } catch (err) {
-      setError(String(err));
+      setError(toUserError(err));
     } finally {
       setLoading(false);
     }
@@ -36,7 +37,7 @@ export function useScan() {
       });
       return result;
     } catch (err) {
-      setError(String(err));
+      setError(toUserError(err));
       return null;
     } finally {
       setLoading(false);
@@ -50,7 +51,7 @@ export function useScan() {
       const data = await scanApi.getScanResults();
       setResults(data);
     } catch (err) {
-      setError(String(err));
+      setError(toUserError(err));
     } finally {
       setLoading(false);
     }

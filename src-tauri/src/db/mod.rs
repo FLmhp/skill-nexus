@@ -2,15 +2,13 @@ use rusqlite::Connection;
 use tauri::Manager;
 
 pub mod agents;
+pub mod config;
 pub mod mcp;
 pub mod scans;
 pub mod skills;
 
 pub fn get_conn(app: &tauri::AppHandle) -> Result<Connection, String> {
-    let app_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
     let db_path = app_dir.join("skill_nexus.db");
     let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
@@ -143,14 +141,9 @@ fn expand_tilde(path: &str) -> String {
     path.replacen('~', &home, 1)
 }
 
-fn insert_default_agents(conn: &Connection) -> Result<(), String> {
+pub fn insert_default_agents(conn: &Connection) -> Result<(), String> {
     let defaults: Vec<(&str, &str, &str, &str)> = vec![
-        (
-            "claude-code",
-            "Claude Code",
-            "claude",
-            "~/.claude/skills/",
-        ),
+        ("claude-code", "Claude Code", "claude", "~/.claude/skills/"),
         ("codex", "Codex", "codex", "~/.codex/skills/"),
         (
             "opencode",
@@ -159,12 +152,7 @@ fn insert_default_agents(conn: &Connection) -> Result<(), String> {
             "~/.config/opencode/skills/",
         ),
         ("cursor", "Cursor", "cursor", "~/.cursor/skills/"),
-        (
-            "gemini-cli",
-            "Gemini CLI",
-            "gemini",
-            "~/.gemini/skills/",
-        ),
+        ("gemini-cli", "Gemini CLI", "gemini", "~/.gemini/skills/"),
         (
             "codebuddy",
             "CodeBuddy",

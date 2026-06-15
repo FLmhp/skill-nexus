@@ -48,6 +48,21 @@ export interface AgentSkill {
   synced_at?: string;
 }
 
+export interface AgentSyncFailure {
+  skill_id: string;
+  skill_name: string;
+  error: string;
+}
+
+export interface AgentSyncResult {
+  agent_id?: string;
+  synced: number;
+  failed: number;
+  skipped: number;
+  failures: AgentSyncFailure[];
+  message: string;
+}
+
 export interface McpServer {
   id: string;
   name: string;
@@ -57,6 +72,12 @@ export interface McpServer {
   env_json?: string;
   url?: string;
   enabled: boolean;
+}
+
+export interface McpTestResult {
+  ok: boolean;
+  message: string;
+  status_code?: number;
 }
 
 export interface ScanResult {
@@ -85,6 +106,7 @@ export interface ScanFinding {
 
 export interface MarketplaceSkill {
   id: string;
+  source: "skillsmp" | "mcpmarket" | "skills-sh-directory" | string;
   name: string;
   description: string;
   author: string;
@@ -92,8 +114,36 @@ export interface MarketplaceSkill {
   downloads: number;
   rating: number;
   source_url: string;
+  detail_url?: string;
   tags: string[];
   installed: boolean;
+}
+
+export interface MarketplaceSourceError {
+  source: string;
+  message: string;
+}
+
+export interface MarketplaceSearchResponse {
+  skills: MarketplaceSkill[];
+  source_errors: MarketplaceSourceError[];
+  page: number;
+  limit: number;
+}
+
+export interface ScanImportSummary {
+  scanned_paths: number;
+  discovered: number;
+  imported: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+  scanned_at: string;
+}
+
+export interface ScanImportResult {
+  skills: Skill[];
+  summary: ScanImportSummary;
 }
 
 export interface GraphData {
@@ -115,4 +165,10 @@ export interface GraphEdge {
   target: string;
   relation_type: string;
   label?: string;
+}
+
+export interface AppSettings {
+  language: "en" | "zh";
+  extra_scan_paths: string[];
+  auto_watch_enabled: boolean;
 }

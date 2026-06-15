@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { McpServer } from "@/types";
+import type { McpServer, McpTestResult } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   Terminal,
@@ -11,6 +11,7 @@ import {
   Check,
   X,
   Loader2,
+  Activity,
 } from "lucide-react";
 
 interface McpServerCardProps {
@@ -18,6 +19,7 @@ interface McpServerCardProps {
   onToggle: (enabled: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
   onUpdate: (server: McpServer) => Promise<void>;
+  onTest: (server: McpServer) => Promise<McpTestResult | null>;
 }
 
 export default function McpServerCard({
@@ -25,12 +27,15 @@ export default function McpServerCard({
   onToggle,
   onDelete,
   onUpdate,
+  onTest,
 }: McpServerCardProps) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(server.name);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<McpTestResult | null>(null);
 
   const handleToggle = async () => {
     setToggling(true);
@@ -48,6 +53,13 @@ export default function McpServerCard({
     if (!editName.trim()) return;
     await onUpdate({ ...server, name: editName.trim() });
     setEditing(false);
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    const result = await onTest(server);
+    setTestResult(result);
+    setTesting(false);
   };
 
   return (
@@ -89,6 +101,8 @@ export default function McpServerCard({
                 <button
                   onClick={handleSave}
                   className="rounded p-0.5 text-green-400 hover:bg-accent"
+                  title="Save"
+                  aria-label="Save MCP server"
                 >
                   <Check className="h-3.5 w-3.5" />
                 </button>
@@ -98,6 +112,8 @@ export default function McpServerCard({
                     setEditName(server.name);
                   }}
                   className="rounded p-0.5 text-muted-foreground hover:bg-accent"
+                  title="Cancel"
+                  aria-label="Cancel editing"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -115,6 +131,7 @@ export default function McpServerCard({
           disabled={toggling}
           className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
           title={server.enabled ? "Disable" : "Enable"}
+          aria-label={server.enabled ? "Disable MCP server" : "Enable MCP server"}
         >
           {toggling ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -151,9 +168,23 @@ export default function McpServerCard({
         </span>
         <div className="flex items-center gap-1">
           <button
+            onClick={handleTest}
+            disabled={testing}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+            title="Test connection"
+            aria-label="Test MCP server"
+          >
+            {testing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Activity className="h-3.5 w-3.5" />
+            )}
+          </button>
+          <button
             onClick={() => setEditing(!editing)}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             title="Edit"
+            aria-label="Edit MCP server"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -162,6 +193,7 @@ export default function McpServerCard({
               onClick={() => setDeleteConfirm(true)}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors"
               title="Delete"
+              aria-label="Delete MCP server"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -188,6 +220,20 @@ export default function McpServerCard({
           )}
         </div>
       </div>
+
+      {testResult && (
+        <div
+          className={cn(
+            "mt-3 rounded-md border px-3 py-2 text-xs",
+            testResult.ok
+              ? "border-green-500/20 bg-green-500/10 text-green-400"
+              : "border-red-500/20 bg-red-500/10 text-red-400"
+          )}
+        >
+          {testResult.message}
+          {testResult.status_code ? ` (${testResult.status_code})` : ""}
+        </div>
+      )}
     </div>
   );
 }

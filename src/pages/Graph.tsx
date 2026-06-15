@@ -3,12 +3,14 @@ import { useGraphStore } from "@/stores/graphStore";
 import SkillGraph from "@/components/graph/SkillGraph";
 import GraphControls from "@/components/graph/GraphControls";
 import GraphLegend from "@/components/graph/GraphLegend";
+import { useI18n } from "@/i18n";
 import type { Core } from "cytoscape";
-import { Loader2, GitGraph } from "lucide-react";
+import { Loader2, GitGraph, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Graph() {
-  const { graphData, loading, layout, fetchGraph, setLayout } = useGraphStore();
+  const { graphData, loading, error, layout, fetchGraph, setLayout } = useGraphStore();
+  const { t } = useI18n();
   const [zoom, setZoom] = useState(1);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [filterRelationType, setFilterRelationType] = useState("");
@@ -88,13 +90,30 @@ export default function Graph() {
     <div className="flex flex-col gap-4 h-[calc(100vh-8rem)]">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Knowledge Graph</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("graph.title")}</h2>
           <p className="text-sm text-muted-foreground">
-            Visualizing {graphData?.nodes.length ?? 0} nodes and {graphData?.edges.length ?? 0}{" "}
-            edges
+            {t("graph.subtitle", {
+              nodes: graphData?.nodes.length ?? 0,
+              edges: graphData?.edges.length ?? 0,
+            })}
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+          <span className="flex min-w-0 items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span className="truncate">{error}</span>
+          </span>
+          <button
+            onClick={() => void fetchGraph()}
+            className="rounded-md bg-red-500/10 px-3 py-1 text-xs font-medium hover:bg-red-500/20"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      )}
 
       <GraphControls
         zoom={zoom}
@@ -117,8 +136,8 @@ export default function Graph() {
           ) : !graphData || graphData.nodes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full rounded-lg border border-border bg-card text-muted-foreground">
               <GitGraph className="h-12 w-12 mb-4 opacity-20" />
-              <p className="text-sm">No graph data available</p>
-              <p className="text-xs mt-1">Scan skills to build the knowledge graph</p>
+              <p className="text-sm">{t("graph.noData")}</p>
+              <p className="text-xs mt-1">{t("graph.noDataHint")}</p>
             </div>
           ) : (
             <SkillGraph
@@ -135,14 +154,16 @@ export default function Graph() {
 
           {selectedNode && (
             <div className="rounded-lg border border-border bg-card p-4">
-              <h4 className="text-sm font-semibold text-foreground mb-2">Node Detail</h4>
+              <h4 className="text-sm font-semibold text-foreground mb-2">
+                {t("graph.nodeDetail")}
+              </h4>
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">Name</p>
+                  <p className="text-xs text-muted-foreground">{t("graph.name")}</p>
                   <p className="text-sm text-foreground">{selectedNode.label}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Type</p>
+                    <p className="text-xs text-muted-foreground">{t("graph.type")}</p>
                   <span
                     className={cn(
                       "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
@@ -158,13 +179,13 @@ export default function Graph() {
                 </div>
                 {selectedNode.group && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Group</p>
+                    <p className="text-xs text-muted-foreground">{t("graph.group")}</p>
                     <p className="text-sm text-foreground">{selectedNode.group}</p>
                   </div>
                 )}
                 {Object.entries(selectedNode.data).length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Data</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t("graph.data")}</p>
                     {Object.entries(selectedNode.data).map(([key, value]) => (
                       <div key={key} className="flex gap-2 text-xs">
                         <span className="text-muted-foreground">{key}:</span>
@@ -180,7 +201,7 @@ export default function Graph() {
           {!selectedNode && graphData && graphData.nodes.length > 0 && (
             <div className="rounded-lg border border-border bg-card p-4">
               <p className="text-xs text-muted-foreground">
-                Click a node to view details
+                {t("graph.clickHint")}
               </p>
             </div>
           )}

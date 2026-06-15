@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSkillStore } from "@/stores/skillStore";
 import { useAgentStore } from "@/stores/agentStore";
 import { useScan } from "@/hooks/useScan";
+import { useI18n } from "@/i18n";
 import {
   Puzzle,
   Bot,
@@ -12,13 +13,21 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, riskBadgeClass, clampRiskScore } from "@/lib/utils";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { skills, loading: skillsLoading, error: skillsError, fetchSkills, scanAndImport } = useSkillStore();
+  const {
+    skills,
+    loading: skillsLoading,
+    error: skillsError,
+    lastScanSummary,
+    fetchSkills,
+    scanAndImport,
+  } = useSkillStore();
   const { agents, fetchAgents } = useAgentStore();
   const { results: scanResults, loading: scanLoading, scanAll, fetchResults } = useScan();
+  const { t } = useI18n();
 
   useEffect(() => {
     fetchSkills();
@@ -28,29 +37,33 @@ export default function Dashboard() {
 
   const stats = [
     {
-      label: "Total Skills",
+      key: "skills",
+      label: t("dashboard.totalSkills"),
       value: skills.length,
       icon: Puzzle,
       color: "text-blue-400",
       bg: "bg-blue-400/10",
     },
     {
-      label: "Agents",
+      key: "agents",
+      label: t("dashboard.agents"),
       value: agents.length,
       icon: Bot,
       color: "text-green-400",
       bg: "bg-green-400/10",
     },
     {
-      label: "Recent Scans",
+      key: "security",
+      label: t("dashboard.recentScans"),
       value: scanResults.length,
       icon: Shield,
       color: "text-purple-400",
       bg: "bg-purple-400/10",
     },
     {
-      label: "Marketplace",
-      value: "Explore",
+      key: "marketplace",
+      label: t("dashboard.marketplace"),
+      value: t("dashboard.explore"),
       icon: Store,
       color: "text-orange-400",
       bg: "bg-orange-400/10",
@@ -65,10 +78,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-          <p className="text-sm text-muted-foreground">
-            Overview of your Skill Nexus ecosystem
-          </p>
+          <h2 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <button
           onClick={handleScan}
@@ -80,9 +91,21 @@ export default function Dashboard() {
           ) : (
             <ScanSearch className="h-4 w-4" />
           )}
-          Scan Skills
+          {t("dashboard.scanSkills")}
         </button>
       </div>
+
+      {lastScanSummary && (
+        <div className="rounded-md border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {t("dashboard.lastScanSummary", {
+            paths: lastScanSummary.scanned_paths,
+            imported: lastScanSummary.imported,
+            updated: lastScanSummary.updated,
+            skipped: lastScanSummary.skipped,
+            errors: lastScanSummary.errors.length,
+          })}
+        </div>
+      )}
 
       {skillsError && (
         <div className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
@@ -97,10 +120,10 @@ export default function Dashboard() {
             key={stat.label}
             className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/20 cursor-pointer"
             onClick={() => {
-              if (stat.label === "Marketplace") navigate("/marketplace");
-              if (stat.label === "Agents") navigate("/agents");
-              if (stat.label === "Total Skills") navigate("/skills");
-              if (stat.label === "Recent Scans") navigate("/security");
+              if (stat.key === "marketplace") navigate("/marketplace");
+              if (stat.key === "agents") navigate("/agents");
+              if (stat.key === "skills") navigate("/skills");
+              if (stat.key === "security") navigate("/security");
             }}
           >
             <div className="flex items-center gap-3">
@@ -119,7 +142,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border bg-card">
           <div className="border-b border-border px-4 py-3">
-            <h3 className="font-semibold text-foreground">Recent Skills</h3>
+            <h3 className="font-semibold text-foreground">{t("dashboard.recentSkills")}</h3>
           </div>
           <div className="divide-y divide-border">
             {skillsLoading ? (
@@ -128,7 +151,7 @@ export default function Dashboard() {
               </div>
             ) : skills.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                No skills found. Click &quot;Scan Skills&quot; to import skills.
+                {t("dashboard.noSkills")}
               </div>
             ) : (
               skills.slice(0, 5).map((skill) => (
@@ -154,7 +177,7 @@ export default function Dashboard() {
 
         <div className="rounded-lg border border-border bg-card">
           <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">Security Overview</h3>
+            <h3 className="font-semibold text-foreground">{t("dashboard.securityOverview")}</h3>
             <button
               onClick={scanAll}
               disabled={scanLoading}
@@ -163,7 +186,7 @@ export default function Dashboard() {
               {scanLoading ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                "Scan All"
+                t("dashboard.scanAll")
               )}
             </button>
           </div>
@@ -174,7 +197,7 @@ export default function Dashboard() {
               </div>
             ) : scanResults.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                No scan results yet. Run a security scan to assess your skills.
+                {t("dashboard.noScans")}
               </div>
             ) : (
               scanResults.slice(0, 5).map((result) => (
@@ -190,14 +213,10 @@ export default function Dashboard() {
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-xs font-medium",
-                      result.risk_score < 3
-                        ? "bg-green-500/10 text-green-400"
-                        : result.risk_score < 7
-                          ? "bg-yellow-500/10 text-yellow-400"
-                          : "bg-red-500/10 text-red-400"
+                      riskBadgeClass(result.risk_score)
                     )}
                   >
-                    {result.risk_score}/10
+                    {clampRiskScore(result.risk_score)}/100
                   </span>
                 </div>
               ))

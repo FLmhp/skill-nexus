@@ -74,6 +74,30 @@ pub struct McpServer {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpTestResult {
+    pub ok: bool,
+    pub message: String,
+    pub status_code: Option<u16>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AgentSyncResult {
+    pub agent_id: Option<String>,
+    pub synced: i32,
+    pub failed: i32,
+    pub skipped: i32,
+    pub failures: Vec<AgentSyncFailure>,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentSyncFailure {
+    pub skill_id: String,
+    pub skill_name: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanResult {
     pub id: String,
     pub skill_id: String,
@@ -102,6 +126,7 @@ pub struct ScanFinding {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceSkill {
     pub id: String,
+    pub source: String,
     pub name: String,
     pub description: String,
     pub author: String,
@@ -109,8 +134,40 @@ pub struct MarketplaceSkill {
     pub downloads: i64,
     pub rating: f64,
     pub source_url: String,
+    pub detail_url: Option<String>,
     pub tags: Vec<String>,
     pub installed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MarketplaceSourceError {
+    pub source: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MarketplaceSearchResponse {
+    pub skills: Vec<MarketplaceSkill>,
+    pub source_errors: Vec<MarketplaceSourceError>,
+    pub page: u32,
+    pub limit: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ScanImportSummary {
+    pub scanned_paths: i32,
+    pub discovered: i32,
+    pub imported: i32,
+    pub updated: i32,
+    pub skipped: i32,
+    pub errors: Vec<String>,
+    pub scanned_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanImportResult {
+    pub skills: Vec<Skill>,
+    pub summary: ScanImportSummary,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -135,4 +192,11 @@ pub struct GraphEdge {
     pub target: String,
     pub relation_type: String,
     pub label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AppSettings {
+    pub language: String,
+    pub extra_scan_paths: Vec<String>,
+    pub auto_watch_enabled: bool,
 }

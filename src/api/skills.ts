@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Skill, GraphData } from "@/types";
+import type { Skill, GraphData, ScanImportResult } from "@/types";
 
 export async function getSkills(): Promise<Skill[]> {
   return invoke<Skill[]>("get_skills");
@@ -9,8 +9,8 @@ export async function getSkill(id: string): Promise<Skill> {
   return invoke<Skill>("get_skill", { id });
 }
 
-export async function scanAndImport(): Promise<Skill[]> {
-  return invoke<Skill[]>("scan_and_import");
+export async function scanAndImport(): Promise<ScanImportResult> {
+  return invoke<ScanImportResult>("scan_and_import");
 }
 
 export async function deleteSkill(id: string): Promise<void> {

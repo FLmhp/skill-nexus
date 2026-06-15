@@ -85,10 +85,7 @@ pub fn update_agent(app: &tauri::AppHandle, agent: &Agent) -> Result<(), String>
     Ok(())
 }
 
-pub fn get_agent_skills(
-    app: &tauri::AppHandle,
-    agent_id: &str,
-) -> Result<Vec<AgentSkill>, String> {
+pub fn get_agent_skills(app: &tauri::AppHandle, agent_id: &str) -> Result<Vec<AgentSkill>, String> {
     let conn = db::get_conn(app)?;
     let mut stmt = conn
         .prepare(

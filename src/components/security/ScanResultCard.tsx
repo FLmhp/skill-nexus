@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ScanResult, ScanFinding } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, clampRiskScore, riskBarClass, riskTextClass } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -50,21 +51,9 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 export default function ScanResultCard({ result }: ScanResultCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useI18n();
   const findings = parseFindings(result.findings_json);
-
-  const riskColor =
-    result.risk_score < 3
-      ? "text-green-400"
-      : result.risk_score < 7
-        ? "text-yellow-400"
-        : "text-red-400";
-
-  const riskBarColor =
-    result.risk_score < 3
-      ? "bg-green-500"
-      : result.risk_score < 7
-        ? "bg-yellow-500"
-        : "bg-red-500";
+  const normalizedRisk = clampRiskScore(result.risk_score);
 
   return (
     <div className="rounded-lg border border-border bg-card transition-all hover:border-primary/20">
@@ -74,14 +63,16 @@ export default function ScanResultCard({ result }: ScanResultCardProps) {
       >
         <div className="flex items-center gap-4">
           <div className={cn("flex h-14 w-14 items-center justify-center rounded-xl bg-muted")}>
-            <span className={cn("text-2xl font-bold", riskColor)}>{result.risk_score}</span>
+            <span className={cn("text-2xl font-bold", riskTextClass(result.risk_score))}>
+              {normalizedRisk}
+            </span>
           </div>
           <div>
             <h3 className="font-semibold text-sm text-foreground">{result.skill_name}</h3>
             <div className="flex items-center gap-2 mt-1">
               <SeverityBadge severity={result.risk_severity} />
               <span className="text-xs text-muted-foreground">
-                {result.components_scanned} components scanned
+                {t("security.components", { count: result.components_scanned })}
               </span>
             </div>
           </div>
@@ -90,11 +81,11 @@ export default function ScanResultCard({ result }: ScanResultCardProps) {
           <div className="hidden sm:block">
             <div className="h-1.5 w-32 rounded-full bg-muted">
               <div
-                className={cn("h-full rounded-full transition-all", riskBarColor)}
-                style={{ width: `${result.risk_score * 10}%` }}
+                className={cn("h-full rounded-full transition-all", riskBarClass(result.risk_score))}
+                style={{ width: `${normalizedRisk}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Risk Score</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("security.riskScore")}</p>
           </div>
           {expanded ? (
             <ChevronUp className="h-5 w-5 text-muted-foreground" />
@@ -107,19 +98,21 @@ export default function ScanResultCard({ result }: ScanResultCardProps) {
       {expanded && (
         <div className="border-t border-border px-5 py-4 space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-foreground mb-1">Recommendation</h4>
+            <h4 className="text-sm font-medium text-foreground mb-1">
+              {t("security.recommendation")}
+            </h4>
             <p className="text-sm text-muted-foreground">{result.recommendation}</p>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
-            Scanned: {new Date(result.scanned_at).toLocaleString()}
+            {t("security.scanned")}: {new Date(result.scanned_at).toLocaleString()}
           </div>
 
           {findings.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-foreground mb-2">
-                Findings ({findings.length})
+                {t("security.findings", { count: findings.length })}
               </h4>
               <div className="space-y-3">
                 {findings.map((finding, idx) => (
@@ -160,20 +153,28 @@ export default function ScanResultCard({ result }: ScanResultCardProps) {
                     <p className="text-xs text-muted-foreground mb-1">{finding.explanation}</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-muted-foreground">Category: </span>
+                        <span className="text-muted-foreground">
+                          {t("security.labels.category")}:{" "}
+                        </span>
                         <span className="text-foreground">{finding.category}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Pattern: </span>
+                        <span className="text-muted-foreground">
+                          {t("security.labels.pattern")}:{" "}
+                        </span>
                         <code className="text-foreground font-mono">{finding.pattern}</code>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">File: </span>
+                        <span className="text-muted-foreground">
+                          {t("security.labels.file")}:{" "}
+                        </span>
                         <span className="text-foreground">{finding.file_path}</span>
                       </div>
                       {finding.line_number && (
                         <div>
-                          <span className="text-muted-foreground">Line: </span>
+                          <span className="text-muted-foreground">
+                            {t("security.labels.line")}:{" "}
+                          </span>
                           <span className="text-foreground">{finding.line_number}</span>
                         </div>
                       )}
@@ -190,7 +191,7 @@ export default function ScanResultCard({ result }: ScanResultCardProps) {
           )}
 
           {findings.length === 0 && (
-            <p className="text-sm text-muted-foreground">No specific findings.</p>
+            <p className="text-sm text-muted-foreground">{t("security.noFindings")}</p>
           )}
         </div>
       )}

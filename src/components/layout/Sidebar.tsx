@@ -13,21 +13,24 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useI18n } from "@/i18n";
+import logoUrl from "@/assets/logo.png";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/skills", icon: Puzzle, label: "Skills" },
-  { to: "/graph", icon: GitGraph, label: "Graph" },
-  { to: "/marketplace", icon: Store, label: "Marketplace" },
-  { to: "/agents", icon: Bot, label: "Agents" },
-  { to: "/mcp", icon: Server, label: "MCP Servers" },
-  { to: "/security", icon: Shield, label: "Security" },
-  { to: "/settings", icon: Settings, label: "Settings" },
+  { to: "/", icon: LayoutDashboard, labelKey: "nav.dashboard" },
+  { to: "/skills", icon: Puzzle, labelKey: "nav.skills" },
+  { to: "/graph", icon: GitGraph, labelKey: "nav.graph" },
+  { to: "/marketplace", icon: Store, labelKey: "nav.marketplace" },
+  { to: "/agents", icon: Bot, labelKey: "nav.agents" },
+  { to: "/mcp", icon: Server, labelKey: "nav.mcp" },
+  { to: "/security", icon: Shield, labelKey: "nav.security" },
+  { to: "/settings", icon: Settings, labelKey: "nav.settings" },
 ];
 
 export default function Sidebar() {
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const { t } = useI18n();
 
   return (
     <aside
@@ -38,17 +41,13 @@ export default function Sidebar() {
     >
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         {!sidebarCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-              <Puzzle className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <div className="flex items-center gap-2">
+            <img src={logoUrl} alt="" className="h-7 w-7 rounded-md object-cover" />
             <span className="font-semibold text-sm text-foreground">Skill Nexus</span>
           </div>
         )}
         {sidebarCollapsed && (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary mx-auto">
-            <Puzzle className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={logoUrl} alt="" className="mx-auto h-7 w-7 rounded-md object-cover" />
         )}
         <button
           onClick={toggleSidebar}
@@ -84,10 +83,10 @@ export default function Sidebar() {
                 sidebarCollapsed && "justify-center px-2"
               )
             }
-            title={sidebarCollapsed ? item.label : undefined}
+            title={sidebarCollapsed ? t(item.labelKey) : undefined}
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {!sidebarCollapsed && <span>{item.label}</span>}
+            {!sidebarCollapsed && <span>{t(item.labelKey)}</span>}
           </NavLink>
         ))}
       </nav>

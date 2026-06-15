@@ -4,6 +4,7 @@ src-tauri/target/
 *.log
 .env
 .vite/
+.cache/
 *.db
 *.db-journal
 *.db-wal

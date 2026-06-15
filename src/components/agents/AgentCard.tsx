@@ -52,6 +52,7 @@ export default function AgentCard({ agent, onToggle, onSync }: AgentCardProps) {
           disabled={toggling}
           className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
           title={agent.enabled ? "Disable" : "Enable"}
+          aria-label={agent.enabled ? "Disable agent" : "Enable agent"}
         >
           {toggling ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -83,6 +84,7 @@ export default function AgentCard({ agent, onToggle, onSync }: AgentCardProps) {
           onClick={handleSync}
           disabled={syncing || !agent.enabled}
           className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 transition-colors"
+          title="Sync agent"
         >
           {syncing ? (
             <Loader2 className="h-3 w-3 animate-spin" />

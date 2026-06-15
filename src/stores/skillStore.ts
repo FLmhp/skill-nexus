@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import type { Skill } from "@/types";
+import type { ScanImportSummary, Skill } from "@/types";
 import * as skillsApi from "@/api/skills";
+import { toUserError } from "@/lib/apiError";
 
 interface SkillState {
   skills: Skill[];
@@ -8,6 +9,7 @@ interface SkillState {
   loading: boolean;
   error: string | null;
   searchQuery: string;
+  lastScanSummary: ScanImportSummary | null;
   fetchSkills: () => Promise<void>;
   scanAndImport: () => Promise<void>;
   deleteSkill: (id: string) => Promise<void>;
@@ -21,6 +23,7 @@ export const useSkillStore = create<SkillState>((set, get) => ({
   loading: false,
   error: null,
   searchQuery: "",
+  lastScanSummary: null,
 
   fetchSkills: async () => {
     set({ loading: true, error: null });
@@ -28,17 +31,17 @@ export const useSkillStore = create<SkillState>((set, get) => ({
       const skills = await skillsApi.getSkills();
       set({ skills, loading: false });
     } catch (err) {
-      set({ error: String(err), loading: false });
+      set({ error: toUserError(err), loading: false });
     }
   },
 
   scanAndImport: async () => {
     set({ loading: true, error: null });
     try {
-      const skills = await skillsApi.scanAndImport();
-      set({ skills, loading: false });
+      const result = await skillsApi.scanAndImport();
+      set({ skills: result.skills, lastScanSummary: result.summary, loading: false });
     } catch (err) {
-      set({ error: String(err), loading: false });
+      set({ error: toUserError(err), loading: false });
     }
   },
 
@@ -50,7 +53,7 @@ export const useSkillStore = create<SkillState>((set, get) => ({
       const selectedSkill = get().selectedSkill?.id === id ? null : get().selectedSkill;
       set({ skills, selectedSkill, loading: false });
     } catch (err) {
-      set({ error: String(err), loading: false });
+      set({ error: toUserError(err), loading: false });
     }
   },
 

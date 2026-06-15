@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Agent } from "@/types";
+import type { Agent, AgentSyncResult } from "@/types";
 
 export async function getAgents(): Promise<Agent[]> {
   return invoke<Agent[]>("get_agents");
@@ -13,10 +13,14 @@ export async function syncAgentSkill(
   skillId: string,
   agentId: string,
   enabled: boolean
-): Promise<void> {
-  return invoke<void>("sync_agent_skill", { skillId, agentId, enabled });
+): Promise<AgentSyncResult> {
+  return invoke<AgentSyncResult>("sync_agent_skill", { skillId, agentId, enabled });
 }
 
-export async function syncAllAgents(): Promise<string> {
-  return invoke<string>("sync_all_agents");
+export async function syncAllAgents(): Promise<AgentSyncResult> {
+  return invoke<AgentSyncResult>("sync_all_agents");
+}
+
+export async function syncAgent(agentId: string): Promise<AgentSyncResult> {
+  return invoke<AgentSyncResult>("sync_agent", { agentId });
 }

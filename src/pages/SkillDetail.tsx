@@ -18,13 +18,16 @@ import {
   Puzzle,
   ScanSearch,
 } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, clampRiskScore, riskBarClass, riskTextClass } from "@/lib/utils";
+import { useI18n } from "@/i18n";
+import { toUserError } from "@/lib/apiError";
 
 export default function SkillDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { deleteSkill, loading: storeLoading } = useSkillStore();
   const { scanSingle, loading: scanLoading } = useScan();
+  const { t } = useI18n();
 
   const [skill, setSkill] = useState<Skill | null>(null);
   const [content, setContent] = useState<string>("");
@@ -44,7 +47,7 @@ export default function SkillDetail() {
         return skillsApi.getSkillContent(id);
       })
       .then((c) => setContent(c))
-      .catch((err) => setError(String(err)))
+      .catch((err) => setError(toUserError(err)))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -82,7 +85,7 @@ export default function SkillDetail() {
         </button>
         <div className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          {error || "Skill not found"}
+          {error || t("skillDetail.notFound")}
         </div>
       </div>
     );
@@ -95,7 +98,7 @@ export default function SkillDetail() {
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Skills
+        {t("skillDetail.backToSkills")}
       </button>
 
       <div className="rounded-lg border border-border bg-card">
@@ -128,7 +131,7 @@ export default function SkillDetail() {
                 ) : (
                   <ScanSearch className="h-4 w-4" />
                 )}
-                Scan
+                {t("skillDetail.scan")}
               </button>
               {!deleteConfirm ? (
                 <button
@@ -137,23 +140,25 @@ export default function SkillDetail() {
                   className="inline-flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  {t("skillDetail.delete")}
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Confirm?</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("skillDetail.confirmDelete")}
+                  </span>
                   <button
                     onClick={handleDelete}
                     disabled={storeLoading}
                     className="rounded-md bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
                   >
-                    Yes
+                    {t("skillDetail.yes")}
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(false)}
                     className="rounded-md bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
                   >
-                    No
+                    {t("skillDetail.no")}
                   </button>
                 </div>
               )}
@@ -162,35 +167,29 @@ export default function SkillDetail() {
         </div>
 
         <div className="p-6 space-y-4">
-          <p className="text-sm text-muted-foreground">{skill.description || "No description"}</p>
+          <p className="text-sm text-muted-foreground">
+            {skill.description || t("skillDetail.noDescription")}
+          </p>
 
           {riskScore !== null && (
             <div className="flex items-center gap-3 rounded-md border border-border p-3 bg-muted/30">
               <ShieldCheck
                 className={cn(
                   "h-5 w-5",
-                  riskScore < 3
-                    ? "text-green-400"
-                    : riskScore < 7
-                      ? "text-yellow-400"
-                      : "text-red-400"
+                  riskTextClass(riskScore)
                 )}
               />
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Risk Score: {riskScore}/10
+                  {t("skillDetail.riskScore")}: {clampRiskScore(riskScore)}/100
                 </p>
                 <div className="mt-1 h-1.5 w-32 rounded-full bg-muted">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all",
-                      riskScore < 3
-                        ? "bg-green-500"
-                        : riskScore < 7
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
+                      riskBarClass(riskScore)
                     )}
-                    style={{ width: `${riskScore * 10}%` }}
+                    style={{ width: `${clampRiskScore(riskScore)}%` }}
                   />
                 </div>
               </div>
@@ -198,19 +197,27 @@ export default function SkillDetail() {
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <MetaItem icon={User} label="Author" value={skill.author} />
-            <MetaItem icon={Calendar} label="Installed" value={formatDate(skill.installed_at)} />
-            <MetaItem icon={Folder} label="Path" value={skill.path} />
-            <MetaItem icon={Globe} label="Source" value={skill.source_url} />
-            <MetaItem icon={FileText} label="License" value={skill.license} />
-            <MetaItem icon={Calendar} label="Updated" value={formatDate(skill.updated_at)} />
+            <MetaItem icon={User} label={t("skillDetail.author")} value={skill.author} />
+            <MetaItem
+              icon={Calendar}
+              label={t("skillDetail.installed")}
+              value={formatDate(skill.installed_at)}
+            />
+            <MetaItem icon={Folder} label={t("skillDetail.path")} value={skill.path} />
+            <MetaItem icon={Globe} label={t("skillDetail.source")} value={skill.source_url} />
+            <MetaItem icon={FileText} label={t("skillDetail.license")} value={skill.license} />
+            <MetaItem
+              icon={Calendar}
+              label={t("skillDetail.updated")}
+              value={formatDate(skill.updated_at)}
+            />
           </div>
         </div>
       </div>
 
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border px-6 py-3">
-          <h3 className="font-semibold text-sm text-foreground">Content</h3>
+          <h3 className="font-semibold text-sm text-foreground">{t("skillDetail.content")}</h3>
         </div>
         <div className="p-6">
           {content ? (
@@ -218,7 +225,7 @@ export default function SkillDetail() {
               {content}
             </pre>
           ) : (
-            <p className="text-sm text-muted-foreground">No content available</p>
+            <p className="text-sm text-muted-foreground">{t("skillDetail.noContent")}</p>
           )}
         </div>
       </div>

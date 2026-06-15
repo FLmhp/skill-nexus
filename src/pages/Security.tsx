@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useScan } from "@/hooks/useScan";
+import { useI18n } from "@/i18n";
 import { Shield, ScanSearch, Loader2, AlertCircle } from "lucide-react";
 import ScanResultCard from "@/components/security/ScanResultCard";
 
 export default function Security() {
   const { results, loading, error, scanAll, fetchResults } = useScan();
+  const { t } = useI18n();
 
   useEffect(() => {
     fetchResults();
@@ -14,9 +16,12 @@ export default function Security() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Security Scan</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("security.title")}</h2>
           <p className="text-sm text-muted-foreground">
-            {results.length} scan result{results.length !== 1 ? "s" : ""}
+            {t("security.subtitle", {
+              count: results.length,
+              plural: results.length !== 1 ? "s" : "",
+            })}
           </p>
         </div>
         <button
@@ -29,7 +34,7 @@ export default function Security() {
           ) : (
             <ScanSearch className="h-4 w-4" />
           )}
-          Scan All Skills
+          {t("security.scanAll")}
         </button>
       </div>
 
@@ -47,8 +52,8 @@ export default function Security() {
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
           <Shield className="h-12 w-12 mb-4 opacity-20" />
-          <p className="text-sm">No scan results</p>
-          <p className="text-xs mt-1">Click &quot;Scan All Skills&quot; to assess security</p>
+          <p className="text-sm">{t("security.noResults")}</p>
+          <p className="text-xs mt-1">{t("security.noResultsHint")}</p>
         </div>
       ) : (
         <div className="space-y-4">

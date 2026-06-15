@@ -134,7 +134,9 @@ export default function SkillGraph({ data, layout, onCyReady, onNodeSelect }: Sk
     cyRef.current = cy;
     onCyReady?.(cy);
 
-    applyLayout(cy, layout);
+    if (data.nodes.length > 500) {
+      cy.edges().style("label", "");
+    }
 
     if (onNodeSelect) {
       cy.on("tap", "node", (evt) => {
@@ -151,7 +153,7 @@ export default function SkillGraph({ data, layout, onCyReady, onNodeSelect }: Sk
       cy.destroy();
       cyRef.current = null;
     };
-  }, [data, onCyReady, onNodeSelect, layout]);
+  }, [data, onCyReady, onNodeSelect]);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -194,32 +196,33 @@ function convertToElements(data: GraphData) {
 }
 
 function applyLayout(cy: Core, layoutName: string) {
+  const shouldAnimate = cy.nodes().length <= 250;
   const layouts: Record<string, cytoscape.LayoutOptions> = {
     cose: {
       name: "cose",
-      animate: true,
-      animationDuration: 800,
+      animate: shouldAnimate,
+      animationDuration: shouldAnimate ? 800 : 0,
       nodeRepulsion: () => 8000,
       idealEdgeLength: () => 120,
       gravity: 0.3,
     },
     breadthfirst: {
       name: "breadthfirst",
-      animate: true,
-      animationDuration: 600,
+      animate: shouldAnimate,
+      animationDuration: shouldAnimate ? 600 : 0,
       directed: true,
       spacingFactor: 1.5,
     },
     circle: {
       name: "circle",
-      animate: true,
-      animationDuration: 600,
+      animate: shouldAnimate,
+      animationDuration: shouldAnimate ? 600 : 0,
       spacingFactor: 1.3,
     },
     grid: {
       name: "grid",
-      animate: true,
-      animationDuration: 600,
+      animate: shouldAnimate,
+      animationDuration: shouldAnimate ? 600 : 0,
       rows: undefined,
     },
   };

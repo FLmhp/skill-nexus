@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSkillStore } from "@/stores/skillStore";
+import { useI18n } from "@/i18n";
 import { Search, ScanSearch, Loader2, AlertCircle, Puzzle } from "lucide-react";
 import SkillCard from "@/components/skills/SkillCard";
 
@@ -14,7 +15,9 @@ export default function Skills() {
     fetchSkills,
     scanAndImport,
     setSearchQuery,
+    lastScanSummary,
   } = useSkillStore();
+  const { t } = useI18n();
 
   useEffect(() => {
     fetchSkills();
@@ -30,9 +33,12 @@ export default function Skills() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Skills</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("skills.title")}</h2>
           <p className="text-sm text-muted-foreground">
-            {skills.length} skill{skills.length !== 1 ? "s" : ""} in your library
+            {t("skills.subtitle", {
+              count: skills.length,
+              plural: skills.length !== 1 ? "s" : "",
+            })}
           </p>
         </div>
         <button
@@ -45,15 +51,27 @@ export default function Skills() {
           ) : (
             <ScanSearch className="h-4 w-4" />
           )}
-          Scan & Import
+          {t("skills.scanImport")}
         </button>
       </div>
+
+      {lastScanSummary && (
+        <div className="rounded-md border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {t("skills.lastScanSummary", {
+            paths: lastScanSummary.scanned_paths,
+            imported: lastScanSummary.imported,
+            updated: lastScanSummary.updated,
+            skipped: lastScanSummary.skipped,
+            errors: lastScanSummary.errors.length,
+          })}
+        </div>
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search skills..."
+          placeholder={t("skills.searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
@@ -76,8 +94,8 @@ export default function Skills() {
           <Puzzle className="h-12 w-12 mb-4 opacity-20" />
           <p className="text-sm">
             {skills.length === 0
-              ? "No skills found. Click \"Scan & Import\" to discover skills."
-              : "No skills match your search."}
+              ? t("skills.noSkills")
+              : t("skills.noMatch")}
           </p>
         </div>
       ) : (

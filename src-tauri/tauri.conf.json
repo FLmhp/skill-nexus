@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicegui/nicegui-tauri/main/.schemas/tauri-schema.json",
   "productName": "Skill Nexus",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.skillnexus.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",

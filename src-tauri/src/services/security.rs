@@ -285,7 +285,9 @@ fn severity_score(severity: &str) -> i32 {
 }
 
 fn has_executable_scripts(dir_path: &Path) -> bool {
-    let exts = ["sh", "bash", "zsh", "fish", "bat", "cmd", "ps1", "psm1", "py", "rb", "pl"];
+    let exts = [
+        "sh", "bash", "zsh", "fish", "bat", "cmd", "ps1", "psm1", "py", "rb", "pl",
+    ];
     if let Ok(entries) = std::fs::read_dir(dir_path) {
         for entry in entries.flatten() {
             if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
@@ -366,15 +368,12 @@ pub fn scan_skill(skill_path: &str) -> Result<ScanResult, String> {
     let mut files_scanned: i32 = 0;
 
     if path.is_dir() {
-        for entry in walkdir::WalkDir::new(path)
-            .into_iter()
-            .filter_entry(|e| {
-                !e.file_name()
-                    .to_str()
-                    .map(|s| s == ".git" || s == "node_modules" || s == "target" || s == "__pycache__")
-                    .unwrap_or(false)
-            })
-        {
+        for entry in walkdir::WalkDir::new(path).into_iter().filter_entry(|e| {
+            !e.file_name()
+                .to_str()
+                .map(|s| s == ".git" || s == "node_modules" || s == "target" || s == "__pycache__")
+                .unwrap_or(false)
+        }) {
             let entry = entry.map_err(|e| e.to_string())?;
             if entry.path().is_file() {
                 files_scanned += 1;
@@ -388,7 +387,10 @@ pub fn scan_skill(skill_path: &str) -> Result<ScanResult, String> {
         all_findings.extend(file_findings);
     }
 
-    let mut risk_score: i32 = all_findings.iter().map(|f| severity_score(&f.severity)).sum();
+    let mut risk_score: i32 = all_findings
+        .iter()
+        .map(|f| severity_score(&f.severity))
+        .sum();
 
     if has_executable_scripts(path) {
         risk_score = ((risk_score as f64) * 1.3) as i32;

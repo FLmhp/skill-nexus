@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/FLmhp/skill-nexus/compare/v0.2.0...v0.3.0) (2026-06-15)
+
+
+### Features
+
+* complete Skill Nexus platform with all phases ([4a60fdc](https://github.com/FLmhp/skill-nexus/commit/4a60fdc3e4bad654dde2f7fb4e9fdbee9e28ee04))
+* release Skill Nexus v0.2.0 ([0d59076](https://github.com/FLmhp/skill-nexus/commit/0d59076b8cdd4259db313783b1d51456315c5718))
+
+
+### Bug Fixes
+
+* add libayatana-appindicator3-dev for Linux tray icon ([1e7c08f](https://github.com/FLmhp/skill-nexus/commit/1e7c08f12f06bdbad81ae50b1e413ed3d3d11673))
+* add tauri npm script for tauri-action compatibility ([f75683d](https://github.com/FLmhp/skill-nexus/commit/f75683d477fa45653a17bbdb66bf9a740024ead7))
+* add tauri script, fix Windows bash shell, suppress Node20 warnings ([92d537e](https://github.com/FLmhp/skill-nexus/commit/92d537ee229fe8b158354f3c9c31ba649dd915f7))
+* BrowserRouter→HashRouter for Tauri production compatibility, fix CSP for Tauri IPC protocols ([b11fdab](https://github.com/FLmhp/skill-nexus/commit/b11fdab3cabac4e7f76e7073f7ea83fa0ffebfb1))
+* disable createUpdaterArtifacts — no updater plugin configured ([1704148](https://github.com/FLmhp/skill-nexus/commit/1704148d32a2a9e7c0c4bc36414f8ad04e43aa1b))
+* match VaporGit CSP pattern (simplified) — remove unnecessary tauri:/ipc: protocols and 'unsafe-inline' script-src, revert base './' ([ee2e838](https://github.com/FLmhp/skill-nexus/commit/ee2e838c579702cd045272b780de5a1ef4d8b95e))
+* release workflow supports both tag push and manual dispatch ([bb0ec82](https://github.com/FLmhp/skill-nexus/commit/bb0ec824cb3cc7c7aef7b86d1f183d0040331817))
+* remove deprecated scope field from fs plugin config ([51fc7cb](https://github.com/FLmhp/skill-nexus/commit/51fc7cb8de0d784350457a86d0e74e2e097b61c9))
+* remove unused tauri-plugin-sql, use rusqlite directly ([8bd5a1e](https://github.com/FLmhp/skill-nexus/commit/8bd5a1ea29bb23859cf15dff6648ea541edd0f49))
+* resolve CI lint errors and action deprecation warnings ([3abf9b7](https://github.com/FLmhp/skill-nexus/commit/3abf9b7cd441db09e2a44172c1c104ef2ee1f0e6))
+* resolve TypeScript errors — disable strict unused checks, fix type issues in graph/sandbox/explorer pages ([f67aaf3](https://github.com/FLmhp/skill-nexus/commit/f67aaf3f34a570907d3127f51770b5362710686d))
+* use tauri-action v0 instead of v2 ([b194a90](https://github.com/FLmhp/skill-nexus/commit/b194a9058cb107f691d87fa4ef1146824a66a6c6))
+* Vite base './' for relative asset paths, add ErrorBoundary, enable logging in release, add loading fallback in HTML ([4e5c30d](https://github.com/FLmhp/skill-nexus/commit/4e5c30dbde9fe8fdf8b750d56ac6eae4a0ad0209))
+* vitest --passWithNoTests to pass CI when no tests exist ([9f0c9ee](https://github.com/FLmhp/skill-nexus/commit/9f0c9eea67977488fedb149276ba082b36c4ba66))
+
 ## [0.2.0] - 2026-06-15
 
 ### Added
